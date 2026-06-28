@@ -3,45 +3,25 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const CURRENCIES = ['USDT', 'BTC', 'ETH', 'TRX', 'LTC', 'XRP', 'MATIC', 'BNB']
-const PLAN_COLORS = { Bronze: '#CD7F32', Starter: '#C9A84C', Growth: '#2196F3', Premium: '#9C27B0', Elite: '#FF9800', Platinum: '#4CAF50' }
 
-const S = {
-  wrap: { minHeight: '100vh', background: '#000', color: '#fff', fontFamily: "'Courier New',monospace" },
-  nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)' },
-  logo: { fontSize: 11, letterSpacing: '0.45em', color: '#fff', textTransform: 'uppercase' },
-  back: { fontSize: 9, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit' },
-  main: { maxWidth: 1100, margin: '0 auto', padding: '32px 20px' },
-  title: { fontSize: 'clamp(22px,3vw,32px)', fontWeight: 400, marginBottom: 6, letterSpacing: '-0.01em' },
-  sub: { fontSize: 9, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 36 },
-  planGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 1, background: 'rgba(255,255,255,0.04)', marginBottom: 32 },
-  planCard: (sel, color) => ({
-    background: '#000', padding: '24px 20px', cursor: 'pointer',
-    border: sel ? `1px solid ${color}` : '1px solid rgba(255,255,255,0.05)',
-    transition: 'border-color 0.2s', position: 'relative',
-    borderTop: `2px solid ${color}`,
-  }),
-  planName: { fontSize: 8, letterSpacing: '0.45em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 10 },
-  planMin: { fontSize: 26, letterSpacing: '-0.02em', marginBottom: 4 },
-  planRet: { fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.5)', marginBottom: 3 },
-  planDur: { fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)' },
-  planTotal: { marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 10, color: 'rgba(255,255,255,0.5)' },
-  depositBox: { background: '#000', border: '1px solid rgba(255,255,255,0.08)', padding: 28, maxWidth: 480 },
-  label: { fontSize: 8, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 8, display: 'block' },
-  input: { width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 16px', color: '#fff', fontFamily: "'Courier New',monospace", fontSize: 14, outline: 'none', marginBottom: 16, letterSpacing: '0.08em' },
-  currGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 16 },
-  currBtn: (sel) => ({
-    padding: '8px 4px', textAlign: 'center', fontSize: 9, letterSpacing: '0.2em', cursor: 'pointer', fontFamily: 'inherit',
-    background: sel ? 'rgba(255,255,255,0.1)' : 'transparent',
-    border: sel ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
-    color: sel ? '#fff' : 'rgba(255,255,255,0.4)',
-  }),
-  shortcuts: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
-  shortBtn: { padding: '6px 14px', fontSize: 9, letterSpacing: '0.18em', cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontFamily: 'inherit' },
-  btn: { width: '100%', background: '#fff', color: '#000', border: 'none', padding: 14, fontFamily: "'Courier New',monospace", fontSize: 10, letterSpacing: '0.35em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' },
-  warn: { fontSize: 9, letterSpacing: '0.06em', color: 'rgba(255,120,80,0.7)', lineHeight: 1.8, marginBottom: 14, padding: '10px 14px', border: '1px solid rgba(255,120,80,0.15)' },
-  info: { fontSize: 9, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)', lineHeight: 1.8, marginBottom: 14 },
-  addrBox: { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 14px', wordBreak: 'break-all', fontSize: 12, letterSpacing: '0.06em', marginBottom: 14, cursor: 'pointer' },
-  err: { color: 'rgba(255,80,80,0.7)', fontSize: 9, letterSpacing: '0.15em', marginTop: 10 },
+const PLAN_PERKS = {
+  Bronze: [], Starter: [],
+  Growth: ['2 years X Premium free', '2 years Grok AI free', 'Private members group', 'SpaceX merch shipped to you'],
+  Premium: ['Everything in Growth', '2 years Starlink internet free', '2 years Tesla FSD free', 'X blue tick verification', 'Free Tesla charging — 1 year', '1 Elon event invite'],
+  Elite: ['Everything in Premium', 'Starlink & FSD extended to 3 years', 'Early Tesla & SpaceX product access', 'SpaceX launch viewing invite', 'Dedicated account manager', '2 Elon event invites'],
+  Platinum: ['Everything in Elite', 'Tesla vehicle discount', '3 Elon event invites', 'Private contact for updates anytime', 'VIP SpaceX launch viewing', 'Lifetime community access'],
+}
+
+const PERK_ICONS = {
+  Tesla: '🚗', Starlink: '🛰️', 'X Premium': '𝕏', Grok: '𝕏', event: '🎟️', Elon: '🎟️',
+  launch: '🚀', merch: '📦', community: '👥', discount: '💰', contact: '📞',
+}
+
+function getPerkIcon(perk) {
+  for (const [key, icon] of Object.entries(PERK_ICONS)) {
+    if (perk.toLowerCase().includes(key.toLowerCase())) return icon
+  }
+  return '✦'
 }
 
 export default function InvestPage() {
@@ -51,24 +31,20 @@ export default function InvestPage() {
   const [selected, setSelected] = useState(null)
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('USDT')
-  const [step, setStep] = useState('plan') // plan | amount | deposit | address | success
+  const [step, setStep] = useState('plan')
   const [depositData, setDepositData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [pollCount, setPollCount] = useState(0)
-
   const token = typeof window !== 'undefined' ? localStorage.getItem('sx_token') : null
 
   useEffect(() => {
     if (!token) { router.push('/login'); return }
-    fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => setUser(d))
-    fetch('/api/plans', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => setPlans(d.plans || []))
+    fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setUser)
+    fetch('/api/plans', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => setPlans(d.plans || []))
   }, [])
 
-  // Poll deposit status for static address
   useEffect(() => {
     if (step !== 'address' || !depositData?.deposit_id) return
     const iv = setInterval(async () => {
@@ -100,7 +76,7 @@ export default function InvestPage() {
       } else {
         setStep('address')
       }
-    } catch (e) { setError('Something went wrong') }
+    } catch { setError('Something went wrong') }
     setLoading(false)
   }
 
@@ -119,124 +95,191 @@ export default function InvestPage() {
       const d = await r.json()
       if (d.error) { setError(d.error); setLoading(false); return }
       setStep('success')
-    } catch (e) { setError('Something went wrong') }
+    } catch { setError('Something went wrong') }
     setLoading(false)
   }
 
-  const copyAddr = () => {
-    navigator.clipboard.writeText(depositData.address)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const color = (p) => PLAN_COLORS[p?.name] || '#fff'
+  const perks = selected ? PLAN_PERKS[selected.name] || [] : []
 
   return (
-    <div style={S.wrap}>
-      <nav style={S.nav}>
-        <div style={S.logo}>SpaceX Stocks</div>
-        <button style={S.back} onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
-      </nav>
+    <div>
+      {step === 'plan' && (
+        <>
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 400, marginBottom: 4 }}>Choose Your Plan</div>
+            <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Select a plan · Our team trades · You earn weekly</div>
+          </div>
 
-      <main style={S.main}>
-        {step === 'plan' && (
-          <>
-            <div style={S.title}>Choose Your Plan</div>
-            <div style={S.sub}>Select a plan · Our team trades · You earn weekly</div>
-            <div style={S.planGrid}>
-              {plans.map(p => (
-                <div key={p.id} style={S.planCard(selected?.id === p.id, color(p))} onClick={() => setSelected(p)}>
-                  <div style={S.planName}>{p.name}</div>
-                  <div style={S.planMin}>${p.min_amount.toLocaleString()} <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>min</span></div>
-                  <div style={S.planRet}>${p.weekly_return.toLocaleString()} per week</div>
-                  <div style={S.planDur}>{p.duration_days} days</div>
-                  <div style={S.planTotal}>Total return: <strong>${p.target_profit.toLocaleString()}</strong></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 1, background: 'rgba(255,255,255,0.04)', marginBottom: 24 }}>
+            {plans.map(p => {
+              const isSel = selected?.id === p.id
+              const hasPerks = (PLAN_PERKS[p.name] || []).length > 0
+              return (
+                <div key={p.id} onClick={() => setSelected(p)} style={{
+                  background: isSel ? 'rgba(0,212,255,0.05)' : '#000',
+                  border: isSel ? '1px solid rgba(0,212,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                  borderTop: `2px solid ${isSel ? '#00D4FF' : 'rgba(255,255,255,0.1)'}`,
+                  padding: '22px 20px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+                }}>
+                  {hasPerks && (
+                    <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(0,212,255,0.6)', textTransform: 'uppercase', background: 'rgba(0,212,255,0.08)', padding: '2px 8px', border: '1px solid rgba(0,212,255,0.15)' }}>Perks</div>
+                  )}
+                  <div style={{ fontSize: 8, letterSpacing: '0.45em', color: isSel ? 'rgba(0,212,255,0.7)' : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 12 }}>{p.name}</div>
+                  <div style={{ fontSize: 28, letterSpacing: '-0.02em', marginBottom: 6 }}>${p.min_amount.toLocaleString()} <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>min</span></div>
+                  <div style={{ fontSize: 11, color: isSel ? 'rgba(0,212,255,0.8)' : 'rgba(255,255,255,0.45)', letterSpacing: '0.06em', marginBottom: 4 }}>${p.weekly_return.toLocaleString()} per week</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', marginBottom: 14 }}>{p.duration_days} days</div>
+                  <div style={{ paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+                    Total return: <span style={{ color: isSel ? '#00D4FF' : 'rgba(255,255,255,0.7)', fontWeight: 600 }}>${p.target_profit.toLocaleString()}</span>
+                  </div>
+                  {hasPerks && (
+                    <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(PLAN_PERKS[p.name] || []).slice(0, 3).map((perk, i) => (
+                        <span key={i} style={{ fontSize: 7, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 7px' }}>{getPerkIcon(perk)} {perk.split(' ').slice(0, 3).join(' ')}</span>
+                      ))}
+                      {(PLAN_PERKS[p.name] || []).length > 3 && <span style={{ fontSize: 7, color: 'rgba(0,212,255,0.4)', padding: '2px 4px' }}>+{(PLAN_PERKS[p.name] || []).length - 3} more</span>}
+                    </div>
+                  )}
                 </div>
-              ))}
+              )
+            })}
+          </div>
+
+          {selected && (
+            <div style={{ background: 'rgba(0,212,255,0.03)', border: '1px solid rgba(0,212,255,0.12)', padding: '20px 22px', marginBottom: 20 }}>
+              <div style={{ fontSize: 8, letterSpacing: '0.38em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 14 }}>Selected: {selected.name}</div>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: perks.length > 0 ? 16 : 0 }}>
+                {[
+                  { label: 'Min Deposit', val: `$${selected.min_amount.toLocaleString()}` },
+                  { label: 'Weekly Return', val: `$${selected.weekly_return.toLocaleString()}` },
+                  { label: 'Duration', val: `${selected.duration_days} days` },
+                  { label: 'Total Return', val: `$${selected.target_profit.toLocaleString()}` },
+                ].map((s, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 16, color: '#00D4FF' }}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
+              {perks.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 10 }}>Included Perks</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {perks.map((p, i) => (
+                      <div key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', padding: '4px 10px', border: '1px solid rgba(0,212,255,0.12)', background: 'rgba(0,212,255,0.03)', letterSpacing: '0.04em' }}>
+                        {getPerkIcon(p)} {p}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            {selected && (
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button style={S.btn} onClick={() => setStep('amount')}>Invest in {selected.name} →</button>
-              </div>
-            )}
-          </>
-        )}
+          )}
 
-        {step === 'amount' && selected && (
-          <>
-            <div style={S.title}>{selected.name} Plan</div>
-            <div style={S.sub}>Enter amount · Deposit crypto · Start earning</div>
+          {selected && (
+            <button onClick={() => setStep('amount')} style={{ background: '#fff', color: '#000', border: 'none', padding: '13px 32px', fontFamily: "'Courier New',monospace", fontSize: 10, letterSpacing: '0.35em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+              Continue with {selected.name} →
+            </button>
+          )}
+        </>
+      )}
 
-            {/* Balance check */}
+      {step === 'amount' && selected && (
+        <>
+          <div style={{ marginBottom: 24 }}>
+            <button onClick={() => setStep('plan')} style={{ fontSize: 8, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', marginBottom: 16, fontFamily: 'inherit' }}>← Back to Plans</button>
+            <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 400, marginBottom: 4 }}>{selected.name} Plan</div>
+            <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Enter amount · Deposit crypto · Start earning</div>
+          </div>
+
+          <div style={{ maxWidth: 460, background: 'rgba(0,212,255,0.02)', border: '1px solid rgba(0,212,255,0.1)', padding: 28 }}>
             {user && user.balance >= selected.min_amount ? (
-              <div style={S.depositBox}>
-                <div style={S.info}>Your available balance: <strong>${(user.balance || 0).toLocaleString()}</strong></div>
-                <label style={S.label}>Investment Amount (USD)</label>
-                <input style={S.input} type="number" placeholder={`Min $${selected.min_amount.toLocaleString()}`} value={amount} onChange={e => setAmount(e.target.value)} />
-                <div style={S.shortcuts}>
-                  {[selected.min_amount, selected.min_amount * 1.5, selected.min_amount * 2].map(v => (
-                    <button key={v} style={S.shortBtn} onClick={() => setAmount(v.toString())}>${v.toLocaleString()}</button>
+              <>
+                <div style={{ fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', lineHeight: 1.9, marginBottom: 20, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  Your balance: <span style={{ color: '#00D4FF' }}>${(user.balance || 0).toLocaleString()}</span> — ready to invest
+                </div>
+                <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Investment Amount (USD)</label>
+                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={`Min $${selected.min_amount.toLocaleString()}`}
+                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', padding: '12px 14px', color: '#fff', fontFamily: "'Courier New',monospace", fontSize: 14, outline: 'none', marginBottom: 12, letterSpacing: '0.06em', display: 'block' }} />
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+                  {[selected.min_amount, selected.min_amount * 1.5, selected.min_amount * 2, selected.min_amount * 3].map(v => (
+                    <button key={v} onClick={() => setAmount(v.toString())} style={{ padding: '6px 14px', fontSize: 9, letterSpacing: '0.18em', cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontFamily: 'inherit' }}>${v.toLocaleString()}</button>
                   ))}
                 </div>
-                {error && <div style={S.err}>{error}</div>}
-                <button style={S.btn} onClick={handleInvest} disabled={loading}>{loading ? 'Processing...' : 'Activate Plan →'}</button>
-              </div>
+                {error && <div style={{ color: 'rgba(255,80,80,0.7)', fontSize: 9, letterSpacing: '0.15em', marginBottom: 14 }}>{error}</div>}
+                <button onClick={handleInvest} disabled={loading} style={{ width: '100%', background: '#fff', color: '#000', border: 'none', padding: 13, fontFamily: "'Courier New',monospace", fontSize: 10, letterSpacing: '0.35em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+                  {loading ? 'Activating...' : 'Activate Plan →'}
+                </button>
+              </>
             ) : (
-              <div style={S.depositBox}>
-                <div style={S.info}>You need to deposit funds first. Minimum for {selected.name}: <strong>${selected.min_amount.toLocaleString()}</strong></div>
-                <label style={S.label}>Deposit Amount (USD)</label>
-                <input style={S.input} type="number" placeholder={`Min $${selected.min_amount}`} value={amount} onChange={e => setAmount(e.target.value)} />
-                <div style={S.shortcuts}>
+              <>
+                <div style={{ fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', lineHeight: 1.9, marginBottom: 20, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  Deposit funds first. Min for {selected.name}: <span style={{ color: '#00D4FF' }}>${selected.min_amount.toLocaleString()}</span>
+                </div>
+                <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Deposit Amount (USD)</label>
+                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={`Min $${selected.min_amount}`}
+                  style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', padding: '12px 14px', color: '#fff', fontFamily: "'Courier New',monospace", fontSize: 14, outline: 'none', marginBottom: 12, letterSpacing: '0.06em', display: 'block' }} />
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                   {[selected.min_amount, selected.min_amount * 1.5, selected.min_amount * 2].map(v => (
-                    <button key={v} style={S.shortBtn} onClick={() => setAmount(v.toString())}>${v.toLocaleString()}</button>
+                    <button key={v} onClick={() => setAmount(v.toString())} style={{ padding: '6px 14px', fontSize: 9, letterSpacing: '0.18em', cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontFamily: 'inherit' }}>${v.toLocaleString()}</button>
                   ))}
                 </div>
-                <label style={S.label}>Select Cryptocurrency</label>
-                <div style={S.currGrid}>
+                <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Select Cryptocurrency</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 18 }}>
                   {CURRENCIES.map(c => (
-                    <button key={c} style={S.currBtn(currency === c)} onClick={() => setCurrency(c)}>{c}</button>
+                    <button key={c} onClick={() => setCurrency(c)} style={{ padding: '8px 4px', textAlign: 'center', fontSize: 9, letterSpacing: '0.15em', cursor: 'pointer', fontFamily: 'inherit', background: currency === c ? 'rgba(0,212,255,0.1)' : 'transparent', border: currency === c ? '1px solid rgba(0,212,255,0.35)' : '1px solid rgba(255,255,255,0.07)', color: currency === c ? '#00D4FF' : 'rgba(255,255,255,0.35)' }}>{c}</button>
                   ))}
                 </div>
                 {(currency === 'ETH' || currency === 'BNB') && (
-                  <div style={S.warn}>Note: {currency} deposits may include gas fees. USDT or TRX recommended for exact amounts.</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,160,0,0.7)', padding: '8px 12px', border: '1px solid rgba(255,160,0,0.15)', marginBottom: 14, letterSpacing: '0.06em', lineHeight: 1.8 }}>Note: {currency} may include gas fees. USDT or TRX recommended.</div>
                 )}
-                {error && <div style={S.err}>{error}</div>}
-                <button style={S.btn} onClick={handleDeposit} disabled={loading}>{loading ? 'Generating address...' : 'Deposit via Crypto →'}</button>
+                {error && <div style={{ color: 'rgba(255,80,80,0.7)', fontSize: 9, letterSpacing: '0.15em', marginBottom: 14 }}>{error}</div>}
+                <button onClick={handleDeposit} disabled={loading} style={{ width: '100%', background: '#fff', color: '#000', border: 'none', padding: 13, fontFamily: "'Courier New',monospace", fontSize: 10, letterSpacing: '0.35em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+                  {loading ? 'Generating address...' : 'Deposit via Crypto →'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {step === 'address' && depositData && (
+        <div style={{ maxWidth: 460 }}>
+          <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 400, marginBottom: 4 }}>Send Payment</div>
+          <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 28 }}>Send exact amount · Do not close this page</div>
+          <div style={{ background: 'rgba(0,212,255,0.02)', border: '1px solid rgba(0,212,255,0.1)', padding: 24 }}>
+            <div style={{ fontSize: 7, letterSpacing: '0.35em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>Send Exactly</div>
+            <div style={{ fontSize: 28, letterSpacing: '-0.02em', marginBottom: 20, color: '#00D4FF' }}>${depositData.amount} {depositData.currency}</div>
+            <div style={{ fontSize: 7, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8 }}>To This Address (tap to copy)</div>
+            <div onClick={() => { navigator.clipboard.writeText(depositData.address); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 14px', wordBreak: 'break-all', fontSize: 11, letterSpacing: '0.04em', marginBottom: 8, cursor: 'pointer', lineHeight: 1.6 }}>
+              {depositData.address}
+            </div>
+            {copied && <div style={{ fontSize: 8, letterSpacing: '0.25em', color: 'rgba(0,212,255,0.6)', marginBottom: 10 }}>COPIED ✓</div>}
+            {depositData.trust_wallet_warning && (
+              <div style={{ fontSize: 9, color: 'rgba(255,160,0,0.6)', padding: '10px 12px', border: '1px solid rgba(255,160,0,0.12)', marginBottom: 14, lineHeight: 1.8 }}>
+                If Trust Wallet shows a "high risk" warning, this is a false positive from OxaPay. The address is safe.
               </div>
             )}
-            <div style={{ marginTop: 16 }}>
-              <button style={{ ...S.back, fontSize: 8 }} onClick={() => setStep('plan')}>← Change Plan</button>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.06em', lineHeight: 1.8 }}>
+              Checking for payment... ({pollCount * 5}s). Page will update automatically when confirmed.
             </div>
-          </>
-        )}
-
-        {step === 'address' && depositData && (
-          <div style={S.depositBox}>
-            <div style={S.title}>Send Payment</div>
-            <div style={{ ...S.sub, marginBottom: 24 }}>Send exact amount to address below</div>
-            <label style={S.label}>Send exactly ({depositData.currency})</label>
-            <div style={{ fontSize: 22, letterSpacing: '-0.01em', marginBottom: 20 }}>${depositData.amount}</div>
-            <label style={S.label}>To this address (click to copy)</label>
-            <div style={S.addrBox} onClick={copyAddr}>{depositData.address}</div>
-            {copied && <div style={{ fontSize: 9, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>COPIED</div>}
-            {depositData.trust_wallet_warning && (
-              <div style={S.warn}>If Trust Wallet shows a "high risk" warning, this is a false positive from OxaPay's address system. The address is safe to send to.</div>
-            )}
-            <div style={S.info}>Checking for payment... ({pollCount * 5}s elapsed). Do not close this page.</div>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === 'success' && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.45em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 16 }}>Mission Confirmed</div>
-            <div style={{ fontSize: 'clamp(28px,5vw,52px)', fontWeight: 400, marginBottom: 16 }}>You're in.</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', lineHeight: 2, maxWidth: 400, margin: '0 auto 32px' }}>
-              {selected ? `Your ${selected.name} plan is now active. Your first weekly return will be paid within 7 days.` : 'Your deposit has been confirmed and credited to your account.'}
-            </div>
-            <button style={S.btn} onClick={() => router.push('/dashboard')}>Go to Dashboard →</button>
+      {step === 'success' && (
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: 48, marginBottom: 20 }}>🚀</div>
+          <div style={{ fontSize: 8, letterSpacing: '0.5em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>Mission Confirmed</div>
+          <div style={{ fontSize: 'clamp(24px,4vw,40px)', fontWeight: 400, marginBottom: 12 }}>You're in.</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', lineHeight: 2, maxWidth: 380, margin: '0 auto 32px' }}>
+            {selected ? `Your ${selected.name} plan is now active. Your first weekly return will be paid within 7 days.` : 'Your deposit has been confirmed and credited to your account.'}
           </div>
-        )}
-      </main>
+          <button onClick={() => router.push('/dashboard')} style={{ background: '#fff', color: '#000', border: 'none', padding: '13px 32px', fontFamily: "'Courier New',monospace", fontSize: 10, letterSpacing: '0.35em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' }}>
+            Go to Dashboard →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
