@@ -17,7 +17,7 @@ export async function GET(req) {
     if (!chatSessions || chatSessions.length === 0) {
       return Response.json({ sessions: [] })
     }
-
+    console.log('Raw chat_sessions from Supabase:', JSON.stringify(chatSessions.map(s => ({id: s.session_id.slice(-8), status: s.status}))))
     const sessions = await Promise.all(chatSessions.map(async (s) => {
       const { data: lastMsg } = await supabaseAdmin
         .from('chat_messages')
