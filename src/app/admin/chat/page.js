@@ -36,7 +36,7 @@ export default function AdminChatPage() {
 
   async function fetchSessions() {
     try {
-      const res = await fetch('/api/chat/session', {
+      const res = await fetch('/api/chat/session?t=' + Date.now(), {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('sx_token')}` }
       })
       if (res.ok) {
