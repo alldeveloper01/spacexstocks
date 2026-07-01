@@ -166,6 +166,7 @@ canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   .nav-right{flex-wrap:wrap;gap:8px;justify-content:flex-end}
   .nav-btn{font-size:7px;padding:6px 10px;letter-spacing:.15em}
   #nav a[href="/login"]{font-size:7px!important;padding:6px 10px!important;letter-spacing:.15em!important}
+  #cta-footer{display:block!important}
 }
 #cta{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;padding:0 28px}
 .cta-ey{font-size:8px;letter-spacing:.58em;color:rgba(255,255,255,.14);margin-bottom:16px;text-transform:uppercase}
@@ -484,6 +485,37 @@ canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
     <div id="cta-msg"></div>
   </div>
   <div class="cta-note">All investments subject to terms & conditions · Returns not guaranteed · Private placement only</div>
+
+  <div id="cta-footer" style="margin-top:40px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,.06);padding-top:28px;display:none;text-align:left">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+      <div>
+        <div style="font-size:7px;letter-spacing:.4em;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:14px">Platform</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="#" onclick="tsc=0.55;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">How It Works</a>
+          <a href="#" onclick="tsc=0.67;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Plans</a>
+          <a href="#" onclick="tsc=0.79;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Perks</a>
+          <a href="/login" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Member Login</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:7px;letter-spacing:.4em;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:14px">Company</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="/about" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">About Us</a>
+          <a href="mailto:invest@spacestocks.finance" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Contact</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:7px;letter-spacing:.4em;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:14px">Legal</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="/terms" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Terms of Service</a>
+          <a href="/privacy" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Privacy Policy</a>
+          <a href="/aml" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">AML Policy</a>
+          <a href="/risk" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Risk Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:24px;font-size:7px;letter-spacing:.18em;color:rgba(255,255,255,.12);text-transform:uppercase">© 2026 SpaceX Stocks. All rights reserved.</div>
+  </div>
 </div>
 
 <div id="ticker">
