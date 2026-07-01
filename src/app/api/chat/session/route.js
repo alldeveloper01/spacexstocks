@@ -13,6 +13,7 @@ export async function GET(req) {
       .from('chat_sessions')
       .select('*')
       .order('updated_at', { ascending: false })
+console.log('Total rows returned:', chatSessions?.length, JSON.stringify(chatSessions?.map(s => ({id: s.session_id.slice(-8), status: s.status, updated: s.updated_at}))))
 
     if (!chatSessions || chatSessions.length === 0) {
       return Response.json({ sessions: [] })
