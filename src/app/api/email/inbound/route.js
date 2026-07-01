@@ -19,11 +19,12 @@ export async function POST(request) {
     let bodyHtml = ''
     try {
       const emailRes = await fetch(`https://api.resend.com/emails/${email_id}`, {
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
-      })
-      const fullEmail = await emailRes.json()
-      bodyText = fullEmail?.text || ''
-      bodyHtml = fullEmail?.html || ''
+  headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
+})
+const fullEmail = await emailRes.json()
+console.log('Full email fetch result:', JSON.stringify(fullEmail))
+bodyText = fullEmail?.text || ''
+bodyHtml = fullEmail?.html || ''
     } catch (err) {
       console.error('Failed to fetch email body:', err)
     }
