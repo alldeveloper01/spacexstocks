@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
+  const { pathname } = request.nextUrl
+  const ua = request.headers.get('user-agent') || ''
+
+  // Mobile redirect
+  if (pathname === '/') {
+    const isMobile = /iPhone|Android|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+    if (isMobile) {
+      return NextResponse.redirect(new URL('/mobile', request.url))
+    }
+  }
+
   if (process.env.NODE_ENV !== 'production') return NextResponse.next()
 
-  const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
   const country = request.headers.get('x-vercel-ip-country') || 'Unknown'
   const city = request.headers.get('x-vercel-ip-city') || ''
