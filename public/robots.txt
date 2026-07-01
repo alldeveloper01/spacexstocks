@@ -25,4 +25,4 @@ Disallow: /admin/
 User-agent: PerplexityBot
 Allow: /
 
-Sitemap: https://spacexstocks.finance/sitemap.xml
+Sitemap: https://spacestocks.finance/sitemap.xml

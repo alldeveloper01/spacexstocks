@@ -45,7 +45,7 @@ export async function POST(request) {
   for (const u of targets) {
     try {
       await resend.emails.send({
-        from: 'SpaceX Stocks <noreply@spacexstocks.finance>',
+        from: 'SpaceX Stocks <noreply@spacestocks.finance>',
         to: u.email,
         subject,
         html: `
@@ -53,7 +53,7 @@ export async function POST(request) {
             <h2 style="color:#C0C0C0;margin-bottom:16px">${subject}</h2>
             <p style="color:#ccc;line-height:1.7;white-space:pre-line">${message}</p>
             <hr style="border-color:#222;margin:32px 0"/>
-            <p style="color:#555;font-size:12px">SpaceX Stocks · spacexstocks.finance</p>
+            <p style="color:#555;font-size:12px">SpaceX Stocks · spacestocks.finance</p>
           </div>
         `
       })

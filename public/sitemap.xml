@@ -3,7 +3,7 @@
 
   <!-- Main landing -->
   <url>
-    <loc>https://spacexstocks.finance</loc>
+    <loc>https://spacestocks.finance</loc>
     <lastmod>2025-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -11,7 +11,7 @@
 
   <!-- Login -->
   <url>
-    <loc>https://spacexstocks.finance/login</loc>
+    <loc>https://spacestocks.finance/login</loc>
     <lastmod>2025-06-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

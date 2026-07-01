@@ -4,20 +4,20 @@ import { join } from 'path'
 export const metadata = {
   title: 'SpaceX Stocks — Private Investment Access',
   description: 'A private managed fund trading SpaceX, Tesla and the world\'s most transformative companies. Weekly returns. Exclusive member perks. Invitation only.',
-  metadataBase: new URL('https://spacexstocks.finance'),
+  metadataBase: new URL('https://spacestocks.finance'),
   openGraph: {
     title: 'SpaceX Stocks — Private Investment Access',
     description: 'Weekly returns. Exclusive perks. Invitation only.',
-    url: 'https://spacexstocks.finance',
+    url: 'https://spacestocks.finance',
     siteName: 'SpaceX Stocks',
     type: 'website',
-    images: [{ url: 'https://spacexstocks.finance/og-image.jpg', width: 1200, height: 630, alt: 'SpaceX Stocks — Private Investment Access' }],
+    images: [{ url: 'https://spacestocks.finance/og-image.jpg', width: 1200, height: 630, alt: 'SpaceX Stocks — Private Investment Access' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SpaceX Stocks',
     description: 'Private SpaceX investment access. Weekly returns.',
-    images: ['https://spacexstocks.finance/og-image.jpg'],
+    images: ['https://spacestocks.finance/og-image.jpg'],
   },
   robots: {
     index: true,

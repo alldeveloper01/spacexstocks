@@ -116,7 +116,7 @@ export default function MemberIDPage() {
       navigator.share({
         title: 'SpaceX Stocks Member',
         text: `I'm a ${user?.active_tier || 'Explorer'} member of SpaceX Stocks — the private investment platform. Member #${user?.member_number}`,
-        url: 'https://spacexstocks.finance'
+        url: 'https://spacestocks.finance'
       })
     }
   }
@@ -132,7 +132,7 @@ export default function MemberIDPage() {
   const joinDate = user?.member_since
     ? new Date(user.member_since).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
     : 'N/A'
-  const qrValue = `https://spacexstocks.finance/member/${memberNumber}`
+  const qrValue = `https://spacestocks.finance/member/${memberNumber}`
 
   const TIER_COLORS = {
     Bronze: '#CD7F32',
@@ -253,7 +253,7 @@ export default function MemberIDPage() {
                     Platform
                   </div>
                   <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>
-                    spacexstocks.finance
+                    spacestocks.finance
                   </div>
                 </div>
               </div>

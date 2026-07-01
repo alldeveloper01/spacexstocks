@@ -25,7 +25,7 @@ export async function POST(request) {
     .eq('id', user.id)
 
   await resend.emails.send({
-    from: 'SpaceX Stocks <noreply@spacexstocks.finance>',
+    from: 'SpaceX Stocks <noreply@spacestocks.finance>',
     to: email,
     subject: 'Your login verification code',
     html: `

@@ -50,10 +50,20 @@ export default function DepositPage() {
   const [polling, setPolling] = useState(false)
   const [cryptoAmount, setCryptoAmount] = useState(null)
   const [fetchingPrice, setFetchingPrice] = useState(false)
+  const [minDeposit, setMinDeposit] = useState(50)
   const pollRef = useRef(null)
   const priceRef = useRef(null)
 
-  const MIN = 50
+  const MIN = minDeposit
+
+  useEffect(() => {
+    fetch('/api/admin/settings', { headers: authHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        const min = d.settings?.find(s => s.key === 'min_deposit')
+        if (min) setMinDeposit(Number(min.value))
+      }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

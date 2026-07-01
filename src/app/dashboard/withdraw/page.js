@@ -33,6 +33,7 @@ export default function WithdrawPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [minWithdraw, setMinWithdraw] = useState(20)
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('sx_token') : null
 
@@ -40,12 +41,16 @@ export default function WithdrawPage() {
     if (!token) { router.push('/login'); return }
     fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setUser)
     fetch('/api/withdraw', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => setHistory(d.withdrawals || []))
+    fetch('/api/admin/settings', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => {
+      const min = d.settings?.find(s => s.key === 'min_withdrawal')
+      if (min) setMinWithdraw(Number(min.value))
+    }).catch(() => {})
   }, [])
 
   const handleWithdraw = async () => {
     setError('')
     const amt = parseFloat(amount)
-    if (!amt || amt < 20) { setError('Minimum withdrawal is $20'); return }
+    if (!amt || amt < minWithdraw) { setError(`Minimum withdrawal is $${minWithdraw}`); return }
     if (!wallet) { setError('Wallet address required'); return }
     if (user?.withdrawal_balance < amt) { setError('Insufficient withdrawal balance'); return }
     setLoading(true)
@@ -94,14 +99,14 @@ export default function WithdrawPage() {
         <div style={S.form}>
           <div>
             <label style={S.label}>Amount (USD)</label>
-            <input style={S.input} type="number" placeholder="Min $20" value={amount} onChange={e => setAmount(e.target.value)} />
+            <input style={S.input} type="number" placeholder={`Min $${minWithdraw}`} value={amount} onChange={e => setAmount(e.target.value)} />
           </div>
           <div>
             <label style={S.label}>TRX Wallet Address</label>
             <input style={S.input} type="text" placeholder="Your TRX wallet address" value={wallet} onChange={e => setWallet(e.target.value)} />
           </div>
           <div style={S.info}>
-            Withdrawals are sent in TRX (TRON network). Processing time: up to 24 hours. Minimum: $20.
+            Withdrawals are sent in TRX (TRON network). Processing time: up to 24 hours. Minimum: ${minWithdraw}.
           </div>
           {error && <div style={S.err}>{error}</div>}
           <button style={S.btn} onClick={handleWithdraw} disabled={loading || !user?.withdrawal_balance}>
