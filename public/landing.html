@@ -486,15 +486,14 @@ canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   </div>
   <div class="cta-note">All investments subject to terms & conditions · Returns not guaranteed · Private placement only</div>
 
-  <div id="cta-footer" style="margin-top:40px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,.06);padding-top:28px;display:none;text-align:left">
+  <div id="cta-footer" style="margin-top:40px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,.06);padding-top:28px;display:block;text-align:left">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
       <div>
         <div style="font-size:7px;letter-spacing:.4em;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:14px">Platform</div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <a href="#" onclick="tsc=0.55;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">How It Works</a>
-          <a href="#" onclick="tsc=0.67;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Plans</a>
-          <a href="#" onclick="tsc=0.79;return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Perks</a>
-          <a href="/login" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Member Login</a>
+          <a href="#" onclick="window.navTo(0.55);return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">How It Works</a>
+          <a href="#" onclick="window.navTo(0.67);return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Plans</a>
+          <a href="#" onclick="window.navTo(0.79);return false;" style="font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.35);text-transform:uppercase;text-decoration:none;font-family:'Courier New',monospace">Perks</a>
         </div>
       </div>
       <div>
@@ -694,6 +693,7 @@ try {
     inner.innerHTML=html;
   }catch(e){}
 }
+  window.navTo=function(v){tsc=v;sc=v;};
   function beginScroll(){
     window.addEventListener('wheel',function(e){if(!introGone)return;tsc=Math.max(0,Math.min(1,tsc+e.deltaY*0.00026));},{passive:true});
     var ty=0;
