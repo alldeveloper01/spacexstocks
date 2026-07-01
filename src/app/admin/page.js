@@ -94,14 +94,18 @@ export default function AdminPage() {
       <nav style={S.nav}>
         <div style={S.logo}>SpaceX Stocks · Admin</div>
         <div style={S.navLinks}>
-          <button style={S.nl} onClick={() => router.push('/admin/users')}>Users</button>
-          <button style={S.nl} onClick={() => router.push('/admin/investments')}>Investments</button>
-          <button style={S.nl} onClick={() => router.push('/admin/withdrawals')}>Withdrawals</button>
-          <button style={S.nl} onClick={() => router.push('/admin/chat')}>Live Chat</button>
-          <button style={S.nl} onClick={() => router.push('/admin/inbox')}>Inbox</button>
-          <button style={S.nl} onClick={() => router.push('/admin/send-email')}>Send Email</button>
-          <button style={S.nl} onClick={() => { localStorage.removeItem('sx_token'); router.push('/login') }}>Sign Out</button>
-        </div>
+  <button style={S.nl} onClick={() => router.push('/admin/users')}>Users</button>
+  <button style={S.nl} onClick={() => router.push('/admin/investments')}>Investments</button>
+  <button style={S.nl} onClick={() => router.push('/admin/withdrawals')}>Withdrawals</button>
+  <button style={S.nl} onClick={() => router.push('/admin/store')}>Store</button>
+  <button style={S.nl} onClick={() => router.push('/admin/kyc')}>KYC</button>
+  <button style={S.nl} onClick={() => router.push('/admin/settings')}>Settings</button>
+  <button style={S.nl} onClick={() => router.push('/admin/broadcast')}>Broadcast</button>
+  <button style={S.nl} onClick={() => router.push('/admin/chat')}>Live Chat</button>
+  <button style={S.nl} onClick={() => router.push('/admin/inbox')}>Inbox</button>
+  <button style={S.nl} onClick={() => router.push('/admin/send-email')}>Send Email</button>
+  <button style={S.nl} onClick={() => { localStorage.removeItem('sx_token'); router.push('/login') }}>Sign Out</button>
+</div>
       </nav>
 
       <main style={S.main}>

@@ -12,52 +12,66 @@ const VALID_FROM = [
 
 export function buildEmailTemplate({ title, body, fromLabel = 'SpaceX Stocks' }) {
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#000000; font-family:'Courier Prime','Courier New',monospace; color:#e0e0e0; }
-  .wrap { max-width:580px; margin:0 auto; padding:40px 20px; }
-  .header { text-align:center; padding-bottom:28px; border-bottom:1px solid rgba(255,255,255,0.08); }
-  .logo { font-size:22px; letter-spacing:0.18em; }
-  .logo-main { color:#ffffff; }
-  .logo-sub { color:#888888; }
-  .tagline { font-size:9px; letter-spacing:0.45em; color:rgba(255,255,255,0.2); margin-top:6px; text-transform:uppercase; }
-  .body { padding:36px 0 28px; }
-  .title { font-size:18px; letter-spacing:0.06em; color:#ffffff; margin-bottom:20px; font-weight:700; }
-  .content { font-size:13px; line-height:2; color:rgba(255,255,255,0.55); letter-spacing:0.04em; }
-  .divider { height:1px; background:rgba(255,255,255,0.06); margin:28px 0; }
-  .footer { font-size:10px; letter-spacing:0.18em; color:rgba(255,255,255,0.18); text-align:center; line-height:2; text-transform:uppercase; }
-  .footer a { color:rgba(255,255,255,0.28); text-decoration:none; }
-  .btn { display:inline-block; background:#ffffff; color:#000000; padding:12px 28px; font-family:'Courier New',monospace; font-size:11px; letter-spacing:0.3em; text-decoration:none; font-weight:700; margin-top:20px; text-transform:uppercase; }
-</style>
+<meta name="color-scheme" content="dark">
 </head>
-<body>
-<div class="wrap">
-  <div class="header">
-    <div class="logo">
-      <span class="logo-main">SPACEX</span><span class="logo-sub"> STOCKS</span>
-    </div>
-    <div class="tagline">Private Investment Access · spacestocks.finance</div>
-  </div>
-  <div class="body">
-    <div class="title">${title}</div>
-    <div class="content">${body}</div>
-  </div>
-  <div class="divider"></div>
-  <div class="footer">
-    <p>© ${new Date().getFullYear()} SpaceX Stocks · spacestocks.finance</p>
-    <p style="margin-top:6px">
-      <a href="mailto:invest@spacestocks.finance">invest@spacestocks.finance</a>
-    </p>
-    <p style="margin-top:6px;font-size:9px;color:rgba(255,255,255,0.1)">
-      This email was sent from ${fromLabel}. If you did not request this, please ignore.
-    </p>
-  </div>
-</div>
+<body style="margin:0;padding:0;background-color:#000000;font-family:'Courier New',Courier,monospace;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#000000;">
+  <tr>
+    <td align="center" style="padding:40px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+
+        <!-- Header -->
+        <tr>
+          <td style="text-align:center;padding-bottom:28px;border-bottom:1px solid #1a1a1a;">
+            <div style="font-size:20px;letter-spacing:6px;color:#ffffff;font-family:'Courier New',monospace;">
+              SPACEX <span style="color:#666666;">STOCKS</span>
+            </div>
+            <div style="font-size:9px;letter-spacing:4px;color:#333333;margin-top:6px;text-transform:uppercase;">
+              Private Investment Access
+            </div>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 0 28px;">
+            <div style="font-size:18px;letter-spacing:2px;color:#ffffff;margin-bottom:20px;font-weight:700;font-family:'Courier New',monospace;">
+              ${title}
+            </div>
+            <div style="font-size:13px;line-height:2.2;color:#cccccc;letter-spacing:1px;font-family:'Courier New',monospace;">
+              ${body}
+            </div>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr>
+          <td style="padding:0;border-top:1px solid #1a1a1a;"></td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding-top:24px;text-align:center;">
+            <div style="font-size:9px;letter-spacing:2px;color:#333333;line-height:2;text-transform:uppercase;font-family:'Courier New',monospace;">
+              <p style="margin:0;">© ${new Date().getFullYear()} SpaceX Stocks · spacestocks.finance</p>
+              <p style="margin:6px 0 0;">
+                <a href="mailto:invest@spacestocks.finance" style="color:#444444;text-decoration:none;">invest@spacestocks.finance</a>
+              </p>
+              <p style="margin:6px 0 0;font-size:8px;color:#222222;">
+                If you did not request this, please ignore this email.
+              </p>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>`
 }

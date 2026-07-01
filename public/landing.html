@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SpaceX Stocks — Private Share Access</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;font-family:'Courier New',monospace;color:#fff;overflow:hidden;-webkit-text-size-adjust:100%}
+canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
+#scanline{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);z-index:300;pointer-events:none;animation:scan 8s linear infinite}
+@keyframes scan{from{top:-2px}to{top:100vh}}
+#nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;opacity:0;transition:opacity 1s ease;pointer-events:none}
+#nav.show{opacity:1;pointer-events:all}
+.nav-logo-main{font-size:11px;letter-spacing:.45em;color:#fff;text-transform:uppercase}
+.nav-logo-sub{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.2);margin-top:2px;text-transform:uppercase}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-link{font-size:9px;letter-spacing:.28em;color:rgba(255,255,255,.25);text-decoration:none;text-transform:uppercase;display:none}
+@media(min-width:600px){.nav-link{display:block}}
+.nav-btn{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:8px 18px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.28em;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.nav-btn:hover{background:#fff;color:#000;border-color:#fff}
+#prog{position:fixed;left:14px;top:50%;transform:translateY(-50%);z-index:400;opacity:0;transition:opacity 1s;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+#prog.show{opacity:1}
+#prog-track{width:1px;height:120px;background:rgba(255,255,255,.08);position:relative}
+#prog-fill{position:absolute;top:0;left:0;width:1px;background:#fff;height:0%}
+#prog-pct{font-size:7px;letter-spacing:.18em;color:rgba(255,255,255,.15);margin-top:6px}
+#dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:400;display:flex;flex-direction:column;gap:12px;opacity:0;transition:opacity 1s;pointer-events:none}
+#dots.show{opacity:1}
+.dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.12);transition:all .4s;cursor:pointer;pointer-events:all}
+.dot.active{background:#fff;box-shadow:0 0 8px rgba(255,255,255,.5)}
+#shint{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:400;text-align:center;opacity:0;transition:opacity 1s;pointer-events:none}
+#shint.show{opacity:1}
+.sh-t{font-size:8px;letter-spacing:.45em;color:rgba(255,255,255,.2);text-transform:uppercase}
+.sh-l{width:1px;height:24px;background:rgba(255,255,255,.12);margin:10px auto 0;animation:shp 2.5s ease-in-out infinite}
+@keyframes shp{0%,100%{opacity:.2;transform:scaleY(1)}50%{opacity:.7;transform:scaleY(1.5)}}
+#intro{position:fixed;top:0;left:0;width:100%;height:100%;z-index:400;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-align:center;padding:0 24px}
+#i-eye{font-size:9px;letter-spacing:.6em;color:rgba(255,255,255,.12);margin-bottom:28px;opacity:0;transition:opacity .8s;text-transform:uppercase}
+#i-title{font-size:clamp(38px,10vw,110px);font-weight:400;letter-spacing:.07em;color:#fff;opacity:0;line-height:1;min-height:1.1em}
+#i-line{width:0;height:1px;background:rgba(255,255,255,.1);margin:24px auto;transition:width 1.5s cubic-bezier(.16,1,.3,1)}
+#i-sub{font-size:clamp(8px,1.2vw,11px);letter-spacing:.5em;color:rgba(255,255,255,.2);opacity:0;transition:opacity .8s;text-transform:uppercase;line-height:2.2}
+#i-status{margin-top:18px;font-size:8px;letter-spacing:.4em;color:rgba(255,255,255,.1);opacity:0;transition:opacity .8s;text-transform:uppercase}
+#reticle{position:fixed;z-index:200;pointer-events:none;opacity:0;transition:opacity .7s;transform:translate(-50%,-50%)}
+.r-out{position:absolute;border:1px solid rgba(255,255,255,.3);border-radius:50%;transform:translate(-50%,-50%);animation:rp 3s ease-in-out infinite}
+.r-in{position:absolute;border:1px solid rgba(255,255,255,.65);border-radius:50%;transform:translate(-50%,-50%)}
+.r-corner{position:absolute;width:7px;height:7px;border-color:rgba(255,255,255,.6);border-style:solid}
+.r-tl{top:-26px;left:-26px;border-width:1px 0 0 1px}.r-tr{top:-26px;right:-26px;border-width:1px 1px 0 0}
+.r-bl{bottom:-26px;left:-26px;border-width:0 0 1px 1px}.r-br{bottom:-26px;right:-26px;border-width:0 1px 1px 0}
+.r-ch{position:absolute;height:1px;background:rgba(255,255,255,.28);transform:translate(-50%,-50%)}
+.r-cv{position:absolute;width:1px;background:rgba(255,255,255,.28);transform:translate(-50%,-50%)}
+.r-info{position:absolute;left:30px;top:-4px;text-align:left}
+.r-stat{font-size:7px;letter-spacing:.4em;color:rgba(255,255,255,.4);animation:blink 1.3s step-end infinite;text-transform:uppercase}
+.r-name{font-size:12px;letter-spacing:.14em;color:#fff;margin-top:3px}
+.r-sub{font-size:8px;letter-spacing:.14em;color:rgba(255,255,255,.28);margin-top:2px}
+.r-co{font-size:7px;letter-spacing:.14em;color:rgba(255,255,255,.16);margin-top:2px}
+@keyframes rp{0%,100%{width:42px;height:42px;opacity:.3}50%{width:54px;height:54px;opacity:.6}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.panel{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none;opacity:0;transition:opacity .75s ease;display:flex;flex-direction:column;justify-content:center}
+.panel.L{padding-left:clamp(32px,7vw,100px)}
+.panel.R{padding-right:clamp(32px,7vw,100px);align-items:flex-end}
+.panel.C{align-items:center;text-align:center;padding:0 32px}
+.p-ey{font-size:8px;letter-spacing:.5em;color:rgba(255,255,255,.22);margin-bottom:16px;display:flex;align-items:center;gap:12px;text-transform:uppercase}
+.p-ey::before{content:'';width:14px;height:1px;background:rgba(255,255,255,.22);flex-shrink:0}
+.panel.R .p-ey{flex-direction:row-reverse}.panel.R .p-ey::before{display:none}
+.panel.R .p-ey::after{content:'';width:14px;height:1px;background:rgba(255,255,255,.22);flex-shrink:0}
+.p-h{font-size:clamp(28px,5.5vw,68px);font-weight:400;line-height:1.05;letter-spacing:-.01em;max-width:520px}
+.panel.R .p-h{text-align:right}
+.p-b{font-size:10px;letter-spacing:.05em;line-height:2.1;color:rgba(255,255,255,.32);max-width:360px;margin-top:14px}
+.panel.R .p-b{text-align:right}
+.p-stats{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap}
+.panel.R .p-stats{justify-content:flex-end}
+.ps-n{font-size:26px;letter-spacing:-.02em;display:block}
+.ps-l{font-size:7px;letter-spacing:.32em;color:rgba(255,255,255,.2);display:block;margin-top:4px;text-transform:uppercase}
+.p-chip{display:inline-block;border:1px solid rgba(255,255,255,.09);padding:5px 12px;font-size:7px;letter-spacing:.32em;color:rgba(255,255,255,.25);margin-top:20px;text-transform:uppercase}
+#rwire{position:fixed;z-index:150;pointer-events:none;opacity:0;transition:opacity .7s;bottom:14%;left:52%}
+#fin{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;opacity:0;transition:opacity .75s;pointer-events:none;width:min(720px,92vw)}
+.fin-h{font-size:clamp(22px,4vw,44px);font-weight:400;text-align:center;margin-bottom:28px;letter-spacing:-.01em}
+.fin-h em{color:rgba(255,255,255,.2);font-style:normal}
+.fin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.05);margin-bottom:16px}
+.fin-c{background:#000;padding:18px 12px;text-align:center;border:1px solid rgba(255,255,255,.04)}
+.fn{font-size:22px;letter-spacing:-.02em;display:block;margin-bottom:4px}
+.fl{font-size:7px;letter-spacing:.28em;color:rgba(255,255,255,.2);text-transform:uppercase}
+.fin-chart{border:1px solid rgba(255,255,255,.06);padding:18px 20px}
+.fc-lbl{font-size:7px;letter-spacing:.38em;color:rgba(255,255,255,.16);margin-bottom:12px;text-transform:uppercase}
+.fc-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fc-yr{font-size:7px;letter-spacing:.18em;color:rgba(255,255,255,.22);width:32px;text-align:right;flex-shrink:0}
+.fc-track{flex:1;height:1px;background:rgba(255,255,255,.04)}
+.fc-fill{height:1px;background:rgba(255,255,255,.65);width:0;transition:width 1.3s cubic-bezier(.16,1,.3,1)}
+.fc-val{font-size:7px;letter-spacing:.1em;color:rgba(255,255,255,.28);width:36px;flex-shrink:0}
+#slayer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:50;pointer-events:none;opacity:0;transition:opacity .8s}
+#why{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;padding:64px clamp(28px,5vw,90px) 52px;opacity:0;transition:opacity .75s;pointer-events:none;display:flex;flex-direction:column;gap:22px}
+.why-h{font-size:clamp(22px,3.5vw,40px);font-weight:400;letter-spacing:-.01em}
+.why-h em{color:rgba(255,255,255,.2);font-style:normal}
+.why-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.04);flex:1}
+@media(max-width:600px){.why-cards{grid-template-columns:repeat(2,1fr)}}
+.wc{background:#000;padding:20px 18px;border:1px solid rgba(255,255,255,.04);transition:border-color .35s,background .35s;pointer-events:all;position:relative;overflow:hidden}
+.wc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);transform:scaleX(0);transition:transform .45s}
+.wc:hover::after{transform:scaleX(1)}.wc:hover{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.012)}
+.wc-n{font-size:7px;letter-spacing:.38em;color:rgba(255,255,255,.14);margin-bottom:12px;text-transform:uppercase}
+.wc-t{font-size:12px;letter-spacing:.05em;margin-bottom:8px;color:rgba(255,255,255,.82)}
+.wc-b{font-size:9px;letter-spacing:.04em;color:rgba(255,255,255,.26);line-height:1.95}
+#plans{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;opacity:0;transition:opacity .75s;pointer-events:none;display:flex;flex-direction:column}
+#plans.visible{opacity:1;pointer-events:all}
+.plans-head{padding:40px clamp(16px,5vw,90px) 16px;flex-shrink:0}
+.plans-head h2{font-size:clamp(18px,3.5vw,40px);font-weight:400;letter-spacing:-.01em}
+.plans-head h2 em{color:rgba(255,255,255,.2);font-style:normal}
+.plans-head p{font-size:9px;letter-spacing:.08em;color:rgba(255,255,255,.25);margin-top:8px;line-height:1.9}
+.plans-scroll{flex:1;overflow-x:auto;overflow-y:hidden;padding:0 clamp(16px,5vw,90px) 52px;display:flex;align-items:stretch;gap:1px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.plans-scroll::after{content:'';min-width:clamp(16px,5vw,90px);flex-shrink:0}
+.plans-scroll::-webkit-scrollbar{height:2px}
+.plans-scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
+.plans-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+.plan-card{background:#000;border:1px solid rgba(255,255,255,.06);padding:20px 16px;width:220px;min-width:220px;max-width:220px;flex-shrink:0;display:flex;flex-direction:column;transition:border-color .3s,transform .3s;position:relative;overflow:hidden}
+.plan-card:hover{border-color:rgba(255,255,255,.18);transform:translateY(-3px)}
+.plan-card.featured{border-color:rgba(255,255,255,.22)}
+.plan-badge{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#fff;color:#000;font-size:7px;letter-spacing:.35em;padding:2px 12px;white-space:nowrap;text-transform:uppercase}
+.plan-name{font-size:8px;letter-spacing:.48em;color:rgba(255,255,255,.22);margin-bottom:10px;text-transform:uppercase}
+.plan-min{font-size:clamp(18px,2.5vw,28px);letter-spacing:-.02em;line-height:1}
+.plan-min small{font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.3)}
+.plan-return{font-size:9px;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-top:6px}
+.plan-duration{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.2);margin-top:3px}
+.plan-div{width:16px;height:1px;background:rgba(255,255,255,.08);margin:14px 0}
+.plan-total{font-size:9px;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-bottom:14px}
+.plan-total span{color:rgba(255,255,255,.7);font-size:13px}
+.plan-perks-label{font-size:7px;letter-spacing:.38em;color:rgba(255,255,255,.18);margin-bottom:10px;text-transform:uppercase}
+.plan-perks{list-style:none;display:flex;flex-direction:column;gap:7px;flex:1}
+.plan-perks li{font-size:9px;letter-spacing:.04em;color:rgba(255,255,255,.28);padding-left:14px;position:relative;line-height:1.7;word-break:break-word;overflow-wrap:break-word}
+.plan-perks li::before{content:'—';position:absolute;left:0;color:rgba(255,255,255,.14)}
+.plan-perks li.perk{color:rgba(255,255,255,.7)}
+.plan-perks li.perk::before{color:rgba(255,255,255,.5)}
+.no-perks{font-size:9px;letter-spacing:.06em;color:rgba(255,255,255,.16);font-style:italic;margin-top:4px}
+.plan-btn{display:block;width:100%;margin-top:18px;padding:11px;background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);font-family:'Courier New',monospace;font-size:8px;letter-spacing:.28em;cursor:pointer;transition:all .3s;text-align:center;text-transform:uppercase;-webkit-appearance:none;border-radius:0}
+.plan-card.featured .plan-btn{background:#fff;color:#000;border-color:#fff}
+.plan-btn:hover{background:#fff;color:#000;border-color:#fff}
+#testi{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;padding:64px clamp(16px,5vw,90px) 52px;opacity:0;transition:opacity .75s;pointer-events:none;display:flex;flex-direction:column;gap:22px}
+.testi-h{font-size:clamp(22px,3.5vw,40px);font-weight:400;letter-spacing:-.01em}
+.testi-h em{color:rgba(255,255,255,.2);font-style:normal}
+.testi-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.04);flex:1;overflow-y:auto}
+.testc{background:#000;padding:22px 18px;border:1px solid rgba(255,255,255,.04)}
+.tq{font-size:32px;color:rgba(255,255,255,.06);line-height:1;margin-bottom:6px}
+.tt{font-size:10px;letter-spacing:.04em;line-height:1.95;color:rgba(255,255,255,.42);font-style:italic;margin-bottom:16px}
+.td{width:14px;height:1px;background:rgba(255,255,255,.07);margin-bottom:12px}
+.tn{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.52);text-transform:uppercase}
+.tr{font-size:7px;letter-spacing:.14em;color:rgba(255,255,255,.16);margin-top:3px;text-transform:uppercase}
+#globe-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;text-align:center;opacity:0;transition:opacity .75s;pointer-events:none;width:90vw;max-width:700px}
+#globe-text.show{opacity:1}
+.gt-eye{font-size:8px;letter-spacing:.55em;color:rgba(255,255,255,.18);text-transform:uppercase;margin-bottom:20px}
+.gt-h{font-size:clamp(32px,6vw,72px);font-weight:400;letter-spacing:.06em;line-height:1.05}
+.gt-sub{font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.2);margin-top:16px;text-transform:uppercase}
+.gt-stats{display:flex;justify-content:center;gap:40px;margin-top:32px;flex-wrap:wrap}
+.gt-stat-n{font-size:22px;letter-spacing:-.02em;display:block}
+.gt-stat-l{font-size:7px;letter-spacing:.32em;color:rgba(255,255,255,.2);text-transform:uppercase;margin-top:4px;display:block}
+@media(max-width:768px){
+  .plans-scroll{padding:0 16px 52px;gap:8px}
+  .plan-card{width:78vw;min-width:78vw;max-width:78vw}
+  .testi-cards{grid-template-columns:1fr}
+  .fin-grid{grid-template-columns:repeat(2,1fr)}
+  .why-cards{grid-template-columns:repeat(2,1fr)}
+  .p-h{font-size:clamp(22px,7vw,48px)}
+  #prog{display:none}
+  .r-info{display:none}
+  .gt-stats{gap:20px}
+  .gt-stat-n{font-size:18px}
+}
+#cta{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;padding:0 28px}
+.cta-ey{font-size:8px;letter-spacing:.58em;color:rgba(255,255,255,.14);margin-bottom:16px;text-transform:uppercase}
+.cta-h{font-size:clamp(48px,10vw,120px);font-weight:400;letter-spacing:.04em;line-height:.95;margin-bottom:10px}
+.cta-sub{font-size:9px;letter-spacing:.38em;color:rgba(255,255,255,.16);margin-bottom:38px;text-transform:uppercase}
+.cta-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:380px;pointer-events:all}
+.cta-inp{background:transparent;border:1px solid rgba(255,255,255,.12);padding:13px 16px;color:#fff;font-family:'Courier New',monospace;font-size:11px;letter-spacing:.18em;outline:none;text-align:center;transition:border-color .3s;text-transform:uppercase;-webkit-appearance:none;border-radius:0}
+.cta-inp::placeholder{color:rgba(255,255,255,.14)}
+.cta-inp:focus{border-color:rgba(255,255,255,.38)}
+.cta-btn{background:#fff;border:none;padding:14px;color:#000;font-family:'Courier New',monospace;font-size:9px;letter-spacing:.38em;cursor:pointer;font-weight:700;transition:all .3s;text-transform:uppercase;border-radius:0;-webkit-appearance:none}
+.cta-btn:hover{background:rgba(255,255,255,.85)}
+.cta-or{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.1);text-transform:uppercase}
+.cta-contact{font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.18);cursor:pointer;transition:color .3s;text-transform:uppercase}
+.cta-contact:hover{color:rgba(255,255,255,.55)}
+#cta-msg{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.32);opacity:0;transition:opacity .5s;text-transform:uppercase}
+.cta-note{margin-top:24px;font-size:7px;letter-spacing:.16em;color:rgba(255,255,255,.07);text-transform:uppercase;max-width:380px;line-height:2.2;pointer-events:none}
+#ticker{position:fixed;bottom:0;left:0;right:0;z-index:400;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.05);height:40px;display:flex;align-items:center;overflow:hidden;opacity:0;transition:opacity 1s;pointer-events:none}
+#ticker.show{opacity:1}
+#t-track{display:flex;animation:ticker 38s linear infinite;white-space:nowrap}
+.ti{display:inline-flex;align-items:center;gap:10px;padding:0 24px;border-right:1px solid rgba(255,255,255,.04);height:40px;flex-shrink:0}
+.ti-s{font-size:7px;letter-spacing:.28em;color:rgba(255,255,255,.22)}
+.ti-p{font-size:11px;color:#fff}
+.ti-c{font-size:8px}.up{color:rgba(255,255,255,.65)}.dn{color:rgba(255,255,255,.22)}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+#t-live{margin-left:auto;display:flex;align-items:center;gap:7px;padding:0 18px;flex-shrink:0;border-left:1px solid rgba(255,255,255,.04)}
+.tl-dot{width:4px;height:4px;border-radius:50%;background:#fff;animation:mbp 2.5s ease-in-out infinite;flex-shrink:0}
+@keyframes mbp{0%,100%{opacity:1}50%{opacity:.12}}
+.tl-txt{font-size:7px;letter-spacing:.28em;color:rgba(255,255,255,.18);text-transform:uppercase}
+#mbar{position:fixed;bottom:50px;right:14px;z-index:400;text-align:right;opacity:0;transition:opacity 1s;pointer-events:none}
+#mbar.show{opacity:1}
+.mb-l{font-size:6px;letter-spacing:.32em;color:rgba(255,255,255,.14);text-transform:uppercase;margin-bottom:3px}
+.mb-v{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.3)}
+#alloc{position:fixed;bottom:50px;left:clamp(28px,5vw,90px);z-index:200;opacity:0;transition:opacity .8s;pointer-events:none}
+#alloc.show{opacity:1}
+.al-l{font-size:6px;letter-spacing:.38em;color:rgba(255,255,255,.16);margin-bottom:4px;text-transform:uppercase}
+.al-t{font-size:20px;letter-spacing:-.01em;color:rgba(255,255,255,.65);font-variant-numeric:tabular-nums}
+#flash{position:fixed;top:0;left:0;width:100%;height:100%;z-index:350;background:#fff;opacity:0;pointer-events:none;transition:opacity .05s}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="scanline"></div>
+<div id="flash"></div>
+
+<div id="globe-text">
+  <div class="gt-eye">Est. 2025 · Invitation Only</div>
+  <div class="gt-h">THE FUTURE<br>IS TRADEABLE.</div>
+  <div class="gt-sub">SpaceX · Tesla · Starlink · X Corp</div>
+  <div class="gt-stats">
+    <div><span class="gt-stat-n">$2.4B+</span><span class="gt-stat-l">Under Management</span></div>
+    <div><span class="gt-stat-n">4,200+</span><span class="gt-stat-l">Active Members</span></div>
+    <div><span class="gt-stat-n">98.4%</span><span class="gt-stat-l">Payout Rate</span></div>
+  </div>
+</div>
+
+<nav id="nav">
+  <div><div class="nav-logo-main">SpaceX Stocks</div><div class="nav-logo-sub">spacestocks.finance</div></div>
+  <div class="nav-right">
+    <a class="nav-link" href="#" id="nav-how">How It Works</a>
+<a class="nav-link" href="#" id="nav-plans">Plans</a>
+<a class="nav-link" href="#" id="nav-perks">Perks</a>
+<button class="nav-btn" id="nav-cta">Request Access</button>
+<a class="nav-link" href="/login" style="display:block;background:#fff;color:#000;padding:8px 18px;font-size:9px;letter-spacing:.28em;text-decoration:none;text-transform:uppercase;font-family:'Courier New',monospace">Member Login</a>
+  </div>
+</nav>
+
+<div id="prog"><div id="prog-track"><div id="prog-fill"></div></div><div id="prog-pct">00%</div></div>
+
+<div id="dots">
+  <div class="dot active" data-si="0"></div>
+  <div class="dot" data-si="1"></div>
+  <div class="dot" data-si="2"></div>
+  <div class="dot" data-si="3"></div>
+  <div class="dot" data-si="4"></div>
+  <div class="dot" data-si="5"></div>
+  <div class="dot" data-si="6"></div>
+  <div class="dot" data-si="7"></div>
+  <div class="dot" data-si="8"></div>
+</div>
+
+<div id="shint"><div class="sh-t">Scroll to explore</div><div class="sh-l"></div></div>
+
+<div id="intro">
+  <div id="i-eye">Private Investment Access</div>
+  <div id="i-title"></div>
+  <div id="i-line"></div>
+  <div id="i-sub">Managed SpaceX Portfolio · Weekly Returns · Exclusive Member Perks</div>
+  <div id="i-status">LAT 28.5° · LON -80.7° · ALT 408KM</div>
+</div>
+
+<!-- LIVE DEPOSIT STRIP -->
+<div id="live-strip" style="position:fixed;bottom:48px;left:0;right:0;z-index:300;opacity:0;transition:opacity 1s;pointer-events:none;overflow:hidden;height:36px">
+  <div id="live-inner" style="display:flex;gap:0;white-space:nowrap;animation:liveScroll 30s linear infinite"></div>
+</div>
+<style>
+@keyframes liveScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.live-item{display:inline-flex;align-items:center;gap:8px;padding:0 20px;border-right:1px solid rgba(255,255,255,.04);height:36px;flex-shrink:0}
+.li-dot{width:5px;height:5px;border-radius:50%;background:#fff;flex-shrink:0}
+.li-cur{font-size:7px;letter-spacing:.28em;color:rgba(255,255,255,.22)}
+.li-amt{font-size:11px;color:#fff}
+.li-lbl{font-size:7px;letter-spacing:.18em;color:rgba(255,255,255,.18)}
+.li-time{font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.12)}
+</style>
+
+<div id="reticle">
+  <div class="r-out" style="width:42px;height:42px;top:0;left:0"></div>
+  <div class="r-in" style="width:15px;height:15px;top:0;left:0"></div>
+  <div class="r-corner r-tl"></div><div class="r-corner r-tr"></div>
+  <div class="r-corner r-bl"></div><div class="r-corner r-br"></div>
+  <div class="r-ch" style="width:72px;top:0;left:0"></div>
+  <div class="r-cv" style="height:72px;top:0;left:0"></div>
+  <div class="r-info">
+    <div class="r-stat" id="r-stat">LOCKED</div>
+    <div class="r-name" id="r-name">HAWTHORNE, CA</div>
+    <div class="r-sub" id="r-sub">SpaceX HQ · EST. 2002</div>
+    <div class="r-co" id="r-co">33.9°N · 118.3°W</div>
+  </div>
+</div>
+
+<div id="rwire">
+  <svg width="28" height="80" viewBox="0 0 28 80" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="0.7" style="filter:drop-shadow(0 0 4px rgba(255,255,255,0.12))">
+    <path d="M14 2 L23 24 L5 24 Z"/><rect x="5" y="24" width="18" height="36" rx="1"/>
+    <circle cx="14" cy="34" r="3"/><circle cx="14" cy="46" r="2"/>
+    <path d="M5 54 L0 70 L5 62 Z"/><path d="M23 54 L28 70 L23 62 Z"/>
+    <path d="M8 60 L7 70 L14 74 L21 70 L20 60 Z"/>
+    <line x1="5" y1="34" x2="23" y2="34"/><line x1="5" y1="44" x2="23" y2="44"/><line x1="14" y1="24" x2="14" y2="60"/>
+  </svg>
+</div>
+
+<div class="panel L" id="p-hw">
+  <div class="p-ey">Mission Origin</div>
+  <h2 class="p-h">WHERE IT<br>ALL BEGAN.</h2>
+  <p class="p-b">From a factory floor in Hawthorne, California, Elon Musk built the company that broke the aerospace monopoly, landed orbital rockets, and made Mars a business plan.</p>
+  <div class="p-stats">
+    <div><span class="ps-n">2002</span><span class="ps-l">Founded</span></div>
+    <div><span class="ps-n">240+</span><span class="ps-l">Launches</span></div>
+    <div><span class="ps-n">$350B</span><span class="ps-l">Valuation</span></div>
+  </div>
+  <div class="p-chip">33.9°N · 118.3°W · Hawthorne CA</div>
+</div>
+
+<div class="panel R" id="p-cc">
+  <div class="p-ey">Launch Operations</div>
+  <h2 class="p-h" style="text-align:right">EVERY LAUNCH<br>MOVES THE<br>MARKET.</h2>
+  <p class="p-b">Cape Canaveral LC-39A. When Falcon 9 lands, SPCE responds within minutes. Our team reads every mission event before the market catches up.</p>
+  <div class="p-stats" style="justify-content:flex-end">
+    <div style="text-align:right"><span class="ps-n">98.7%</span><span class="ps-l">Success Rate</span></div>
+    <div style="text-align:right"><span class="ps-n">320+</span><span class="ps-l">Landings</span></div>
+  </div>
+  <div class="p-chip">28.4°N · 80.6°W · Kennedy Space Center</div>
+</div>
+
+<div id="fin">
+  <div class="fin-h">THE NUMBERS<br><em>DON'T LIE.</em></div>
+  <div class="fin-grid">
+    <div class="fin-c"><span class="fn">$160</span><span class="fl">IPO Price</span></div>
+    <div class="fin-c"><span class="fn">$350B</span><span class="fl">Valuation</span></div>
+    <div class="fin-c"><span class="fn">$9.2B</span><span class="fl">2025 Revenue</span></div>
+    <div class="fin-c"><span class="fn">62%</span><span class="fl">Market Share</span></div>
+  </div>
+  <div class="fin-chart">
+    <div class="fc-lbl">Revenue Growth · 2021–2025</div>
+    <div class="fc-row"><div class="fc-yr">2021</div><div class="fc-track"><div class="fc-fill" id="fb0" data-w="28"></div></div><div class="fc-val">$2.0B</div></div>
+    <div class="fc-row"><div class="fc-yr">2022</div><div class="fc-track"><div class="fc-fill" id="fb1" data-w="43"></div></div><div class="fc-val">$3.1B</div></div>
+    <div class="fc-row"><div class="fc-yr">2023</div><div class="fc-track"><div class="fc-fill" id="fb2" data-w="61"></div></div><div class="fc-val">$4.6B</div></div>
+    <div class="fc-row"><div class="fc-yr">2024</div><div class="fc-track"><div class="fc-fill" id="fb3" data-w="80"></div></div><div class="fc-val">$6.7B</div></div>
+    <div class="fc-row"><div class="fc-yr">2025</div><div class="fc-track"><div class="fc-fill" id="fb4" data-w="100"></div></div><div class="fc-val">$9.2B</div></div>
+  </div>
+</div>
+
+<div class="panel C" id="p-sl">
+  <div class="p-ey" style="justify-content:center">Starlink Network</div>
+  <h2 class="p-h" style="text-align:center;max-width:640px">6,000 SATELLITES.<br>EVERY CONTINENT.<br>ONE COMPANY.</h2>
+  <p class="p-b" style="text-align:center;max-width:460px;margin:16px auto 0">Starlink generates $6B+ annually. It funds Starship. Starship funds Mars. You're not buying a rocket company — you're buying the infrastructure of civilization.</p>
+</div>
+<div id="slayer"></div>
+
+<div id="why">
+  <div class="why-h">WHY <em>CHOOSE US</em></div>
+  <div class="why-cards">
+    <div class="wc"><div class="wc-n">01</div><div class="wc-t">We Trade, You Earn</div><div class="wc-b">You don't need to know anything about stocks. Our expert team handles every trade on your behalf. You just deposit, watch your money grow, and withdraw.</div></div>
+    <div class="wc"><div class="wc-n">02</div><div class="wc-t">Tied To SpaceX</div><div class="wc-b">Your returns move with the most watched company on earth right now. SpaceX went public at $160 — and we believe it's just getting started.</div></div>
+    <div class="wc"><div class="wc-n">03</div><div class="wc-t">Weekly Payouts</div><div class="wc-b">Your returns are paid out every single week. No waiting months to see results. You see your money working from week one.</div></div>
+    <div class="wc"><div class="wc-n">04</div><div class="wc-t">Start From $1,000</div><div class="wc-b">No complicated setup. No trading experience needed. Get in, pick your plan, and let our team do the rest.</div></div>
+    <div class="wc"><div class="wc-n">05</div><div class="wc-t">Crypto In, Crypto Out</div><div class="wc-b">Deposit and withdraw in crypto — fast, transparent, and available to anyone anywhere in the world. No banks, no delays.</div></div>
+    <div class="wc"><div class="wc-n">06</div><div class="wc-t">Exclusive Member Perks</div><div class="wc-b">Higher plans unlock real-world benefits — Tesla access, Starlink internet, X Premium, launch event invites, and more. Benefits money alone can't buy.</div></div>
+  </div>
+</div>
+
+<div id="plans">
+  <div class="plans-head">
+    <h2>INVESTMENT <em>PLANS</em></h2>
+    <p>Deposit once. Our team trades. You earn weekly. Higher plans unlock exclusive real-world perks.</p>
+  </div>
+  <div class="plans-scroll">
+    <div class="plan-card">
+      <div class="plan-name">Bronze</div>
+      <div class="plan-min">$1,000 <small>min</small></div>
+      <div class="plan-return">$1,800 per week</div>
+      <div class="plan-duration">21 days · 3 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$5,400</span></div>
+      <div class="no-perks">Returns only — no perks at this tier</div>
+      <button class="plan-btn" onclick="window.location.href='/login'">Get Started</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-min">$2,000 <small>min</small></div>
+      <div class="plan-return">$2,100 per week</div>
+      <div class="plan-duration">28 days · 4 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$8,400</span></div>
+      <div class="no-perks">Returns only — no perks at this tier</div>
+      <button class="plan-btn" onclick="window.location.href='/login'">Get Started</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Growth</div>
+      <div class="plan-min">$5,000 <small>min</small></div>
+      <div class="plan-return">$3,200 per week</div>
+      <div class="plan-duration">42 days · 6 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$19,200</span></div>
+      <div class="plan-perks-label">Included Perks</div>
+      <ul class="plan-perks">
+        <li class="perk">2 years of X Premium — free</li>
+        <li class="perk">2 years of Grok AI — free</li>
+        <li class="perk">Private members group access</li>
+        <li class="perk">Free SpaceX branded items shipped to you</li>
+      </ul>
+      <button class="plan-btn" onclick="window.location.href='/login'">Get Started</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">Most Popular</div>
+      <div class="plan-name">Premium</div>
+      <div class="plan-min">$10,000 <small>min</small></div>
+      <div class="plan-return">$5,500 per week</div>
+      <div class="plan-duration">56 days · 8 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$44,000</span></div>
+      <div class="plan-perks-label">Included Perks</div>
+      <ul class="plan-perks">
+        <li class="perk">Everything in Growth</li>
+        <li class="perk">2 years of Starlink internet — free</li>
+        <li class="perk">2 years of Tesla self-driving software — free</li>
+        <li class="perk">We get your X account verified with a blue tick</li>
+        <li class="perk">Free Tesla charging for a full year</li>
+        <li class="perk">You hear SpaceX news before the public does</li>
+        <li class="perk">1 invite to an exclusive Elon Musk event</li>
+      </ul>
+      <button class="plan-btn" onclick="window.location.href='/login'">Get Started</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Elite</div>
+      <div class="plan-min">$20,000 <small>min</small></div>
+      <div class="plan-return">$8,100 per week</div>
+      <div class="plan-duration">120 days · 17 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$129,600</span></div>
+      <div class="plan-perks-label">Included Perks</div>
+      <ul class="plan-perks">
+        <li class="perk">Everything in Premium</li>
+        <li class="perk">Starlink internet extended to 3 years</li>
+        <li class="perk">Tesla self-driving software extended to 3 years</li>
+        <li class="perk">New Tesla & SpaceX products before public release</li>
+        <li class="perk">Invite to watch a real SpaceX rocket launch in person</li>
+        <li class="perk">A dedicated person from our team handles your account</li>
+        <li class="perk">2 Elon event invites during your plan</li>
+      </ul>
+      <button class="plan-btn" onclick="window.location.href='/login'">Get Started</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Platinum</div>
+      <div class="plan-min">$50,000 <small>min</small></div>
+      <div class="plan-return">$16,000 per week</div>
+      <div class="plan-duration">180 days · 26 weeks</div>
+      <div class="plan-div"></div>
+      <div class="plan-total">Total return: <span>$384,000</span></div>
+      <div class="plan-perks-label">Included Perks</div>
+      <ul class="plan-perks">
+        <li class="perk">Everything in Elite</li>
+        <li class="perk">A discount on buying a Tesla car</li>
+        <li class="perk">3 Elon event invites during your plan</li>
+        <li class="perk">Your own private contact for updates anytime</li>
+        <li class="perk">VIP spot at SpaceX launches — best viewing area</li>
+        <li class="perk">Lifetime access to our private members community</li>
+      </ul>
+      <button class="plan-btn" onclick="window.location.href='/login'">Apply Now</button>
+    </div>
+  </div>
+</div>
+
+<div id="testi">
+  <div class="testi-h">MEMBER <em>RESULTS</em></div>
+  <div class="testi-cards">
+    <div class="testc"><div class="tq">"</div><div class="tt">I put in $5,000 on the Growth plan and received my first payout within a week. The process was simple — deposit, wait, get paid. I didn't need to understand anything about stocks.</div><div class="td"></div><div class="tn">Marcus T.</div><div class="tr">Growth Member · London, UK</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">The Starlink subscription alone at Premium tier covers more than my monthly subscription cost. The returns on top of that make this a no-brainer for anyone who can afford the entry.</div><div class="td"></div><div class="tn">Priya K.</div><div class="tr">Premium Member · Singapore</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">I went Platinum. The Tesla discount, the event invites, the weekly returns — I've never seen a platform combine financial returns with real lifestyle benefits like this before.</div><div class="td"></div><div class="tn">Daniel O.</div><div class="tr">Platinum Member · Lagos, NG</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">Week three on the Elite plan. My third weekly return just landed. I was skeptical at first but the numbers don't lie. My team contact has been responsive every single time I had a question.</div><div class="td"></div><div class="tn">James R.</div><div class="tr">Elite Member · Toronto, CA</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">Started on Bronze just to test it. Got my return on schedule. Moved straight to Premium the next cycle. The X blue tick alone was worth it for my personal brand.</div><div class="td"></div><div class="tn">Aisha M.</div><div class="tr">Premium Member · Dubai, UAE</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">The Grok AI access at Growth tier has been incredible for my business. The investment returns are almost secondary at this point. This platform over-delivers at every level.</div><div class="td"></div><div class="tn">Kevin L.</div><div class="tr">Growth Member · Sydney, AU</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">My fourth week of returns just hit. I've already referred two colleagues. The invite-only system made me take it more seriously — felt like I was getting access to something real.</div><div class="td"></div><div class="tn">Sofia B.</div><div class="tr">Starter Member · Madrid, ES</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">The SpaceX launch viewing event that came with my Elite plan was unreal. Stood 3 miles from the pad. But honestly the weekly $8,100 hitting every Friday is what keeps me here.</div><div class="td"></div><div class="tn">Raj P.</div><div class="tr">Elite Member · Mumbai, IN</div></div>
+    <div class="testc"><div class="tq">"</div><div class="tt">I manage my family's investments. SpaceX Stocks is the cleanest, most straightforward platform I've used. Weekly returns, crypto in and out, no complications. Exactly what we needed.</div><div class="td"></div><div class="tn">Claire D.</div><div class="tr">Premium Member · Paris, FR</div></div>
+  </div>
+</div>
+
+<div id="cta">
+  <div class="cta-ey">spacestocks.finance — Private Access</div>
+  <h1 class="cta-h">REQUEST<br>ACCESS</h1>
+  <div class="cta-sub">Enter your invitation code to proceed</div>
+  <div class="cta-form">
+    <input class="cta-inp" id="code-in" type="text" placeholder="INVITATION CODE" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    <button class="cta-btn" id="cta-btn">Verify Code</button>
+    <div class="cta-or">— or —</div>
+    <div class="cta-contact" id="contact-link">invest@spacestocks.finance</div>
+    <div id="cta-msg"></div>
+  </div>
+  <div class="cta-note">All investments subject to terms & conditions · Returns not guaranteed · Private placement only</div>
+</div>
+
+<div id="ticker">
+  <div id="t-track">
+    <div class="ti"><span class="ti-s">SPCE</span><span class="ti-p" id="tp1">$160.00</span><span class="ti-c up" id="tc1">▲ +33.3%</span></div>
+    <div class="ti"><span class="ti-s">TSLA</span><span class="ti-p">$248.71</span><span class="ti-c up">▲ +3.72%</span></div>
+    <div class="ti"><span class="ti-s">NVDA</span><span class="ti-p">$1,087</span><span class="ti-c dn">▼ -1.40%</span></div>
+    <div class="ti"><span class="ti-s">S&amp;P 500</span><span class="ti-p">5,431</span><span class="ti-c up">▲ +0.43%</span></div>
+    <div class="ti"><span class="ti-s">NASDAQ</span><span class="ti-p">17,842</span><span class="ti-c dn">▼ -0.12%</span></div>
+    <div class="ti"><span class="ti-s">BTC</span><span class="ti-p">$67,420</span><span class="ti-c up">▲ +1.86%</span></div>
+    <div class="ti"><span class="ti-s">XAI</span><span class="ti-p">$94.20</span><span class="ti-c up">▲ +8.30%</span></div>
+    <div class="ti"><span class="ti-s">SPCE</span><span class="ti-p">$160.00</span><span class="ti-c up">▲ +33.3%</span></div>
+    <div class="ti"><span class="ti-s">TSLA</span><span class="ti-p">$248.71</span><span class="ti-c up">▲ +3.72%</span></div>
+    <div class="ti"><span class="ti-s">NVDA</span><span class="ti-p">$1,087</span><span class="ti-c dn">▼ -1.40%</span></div>
+    <div class="ti"><span class="ti-s">S&amp;P 500</span><span class="ti-p">5,431</span><span class="ti-c up">▲ +0.43%</span></div>
+    <div class="ti"><span class="ti-s">NASDAQ</span><span class="ti-p">17,842</span><span class="ti-c dn">▼ -0.12%</span></div>
+    <div class="ti"><span class="ti-s">BTC</span><span class="ti-p">$67,420</span><span class="ti-c up">▲ +1.86%</span></div>
+    <div class="ti"><span class="ti-s">XAI</span><span class="ti-p">$94.20</span><span class="ti-c up">▲ +8.30%</span></div>
+  </div>
+  <div id="t-live"><div class="tl-dot"></div><div class="tl-txt">Markets Open</div></div>
+</div>
+
+<div id="mbar"><div class="mb-l">Mission Status</div><div class="mb-v" id="mb-v">FALCON 9 · STANDBY</div></div>
+<div id="alloc"><div class="al-l">Next Payout Window</div><div class="al-t" id="al-t">71:59:42</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+try {
+  var renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setClearColor(0x000000,1);
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,0.1,3000);
+  camera.position.set(0,0,300);
+  var sg=new THREE.BufferGeometry(),SC=5000,spos=new Float32Array(SC*3);
+  for(var i=0;i<SC;i++){var r=650+Math.random()*1200,t=Math.random()*Math.PI*2,p=Math.acos(2*Math.random()-1);spos[i*3]=r*Math.sin(p)*Math.cos(t);spos[i*3+1]=r*Math.sin(p)*Math.sin(t);spos[i*3+2]=r*Math.cos(p);}
+  sg.setAttribute('position',new THREE.BufferAttribute(spos,3));
+  var starField=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.9,transparent:true,opacity:0.75}));
+  scene.add(starField);
+  function buildTex(){
+    var W=2048,H=1024,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    var ctx=cv.getContext('2d');ctx.fillStyle='#000000';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#0c0c0c';
+    function poly(pts){ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(var k=1;k<pts.length;k++)ctx.lineTo(pts[k][0],pts[k][1]);ctx.closePath();ctx.fill();}
+    poly([[300,195],[440,175],[485,228],[500,340],[455,440],[388,492],[295,468],[252,380],[275,280]]);
+    poly([[400,492],[445,500],[430,560],[400,580],[385,540],[388,505]]);
+    poly([[415,548],[510,528],[555,595],[572,718],[528,840],[455,872],[396,792],[385,662],[398,588]]);
+    poly([[830,192],[848,185],[858,220],[845,238],[828,228]]);
+    poly([[832,198],[948,182],[1005,225],[1018,288],[972,315],[905,325],[842,298],[828,248]]);
+    poly([[908,148],[945,140],[968,175],[955,215],[930,220],[912,195]]);
+    poly([[872,298],[995,282],[1062,372],[1078,535],[1032,718],[945,772],[858,715],[828,548],[838,385]]);
+    poly([[1005,275],[1098,265],[1125,320],[1105,368],[1052,372],[1018,330]]);
+    poly([[1042,158],[1428,138],[1598,198],[1655,328],[1602,458],[1495,492],[1305,472],[1158,412],[1048,322]]);
+    poly([[1115,368],[1198,355],[1235,418],[1218,505],[1178,548],[1128,488],[1108,418]]);
+    poly([[1452,368],[1545,358],[1605,412],[1595,468],[1522,492],[1458,455],[1435,408]]);
+    poly([[1492,682],[1648,662],[1692,742],[1648,818],[1522,825],[1458,758]]);
+    poly([[1595,248],[1618,242],[1628,295],[1612,338],[1588,322],[1578,268]]);
+    poly([[492,118],[598,108],[625,158],[582,205],[492,195]]);
+    function glow(x,y,radius,brightness){
+      var gr=ctx.createRadialGradient(x,y,0,x,y,radius);
+      gr.addColorStop(0,'rgba(255,252,230,'+brightness+')');
+      gr.addColorStop(0.3,'rgba(255,248,200,'+(brightness*0.45)+')');
+      gr.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,'+(Math.min(brightness*1.15,0.98))+')';
+      ctx.beginPath();ctx.arc(x,y,1.3,0,Math.PI*2);ctx.fill();
+    }
+    [[448,282,18,.95],[462,278,14,.9],[438,292,12,.85],[428,298,10,.8],[455,270,9,.75],[442,305,8,.7],[318,292,20,.98],[308,298,16,.92],[325,285,12,.85],[335,288,10,.8],[305,308,9,.72],[388,288,12,.78],[402,282,10,.72],[835,202,14,.9],[848,198,10,.82],[908,218,16,.95],[925,212,14,.9],[918,228,12,.85],[895,225,10,.8],[938,222,10,.78],[875,238,12,.82],[908,262,10,.72],[1005,215,12,.75],[1045,298,14,.82],[1062,292,11,.75],[1078,285,9,.68],[1148,462,16,.88],[1172,448,12,.82],[1558,262,22,.98],[1578,255,18,.95],[1542,278,16,.9],[1512,298,14,.85],[1482,322,13,.82],[1595,268,11,.8],[1608,262,12,.88],[1618,268,10,.82],[1488,422,12,.78],[912,392,11,.65],[968,562,10,.58],[448,652,14,.78],[482,682,12,.72],[1562,722,14,.78],[1588,702,11,.72]].forEach(function(a){glow(a[0],a[1],a[2],a[3]);});
+    return new THREE.CanvasTexture(cv);
+  }
+  var R=65;
+  var earth=new THREE.Mesh(new THREE.SphereGeometry(R,72,72),new THREE.MeshPhongMaterial({map:buildTex(),emissive:new THREE.Color(0x050505),emissiveIntensity:1.2,specular:new THREE.Color(0x050505),shininess:4}));
+  scene.add(earth);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R+2.2,32,32),new THREE.MeshBasicMaterial({color:0x112233,transparent:true,opacity:0.045,side:THREE.BackSide})));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R+0.4,20,20),new THREE.MeshBasicMaterial({color:0x1a1a1a,wireframe:true,transparent:true,opacity:0.1})));
+  function mkRing(r,tx,op){var pts=[];for(var i=0;i<=200;i++){var a=i/200*Math.PI*2;pts.push(new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r));}var l=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x3a3a3a,transparent:true,opacity:op}));l.rotation.x=tx;return l;}
+  var rings=[mkRing(80,.42,.42),mkRing(96,.95,.26),mkRing(112,.18,.18),mkRing(128,.62,.12)];
+  rings.forEach(function(r){scene.add(r);});
+  function mkSat(orR,tx,spd,ph){var s=new THREE.Mesh(new THREE.SphereGeometry(.52,6,6),new THREE.MeshBasicMaterial({color:0xffffff}));s.userData={orR:orR,tx:tx,spd:spd,angle:ph,hist:[]};var tpts=[];for(var i=0;i<22;i++)tpts.push(new THREE.Vector3(0,0,0));var trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints(tpts),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.1}));s.userData.trail=trail;scene.add(s,trail);return s;}
+  var sats=[[80,.42,.72,0],[80,.42,.5,Math.PI],[96,.95,.42,1.1],[96,.95,.58,2.7],[112,.18,.32,.9],[128,.62,.26,3.6]].map(function(a){return mkSat(a[0],a[1],a[2],a[3]);});
+  function ll3(lat,lon,r){var phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
+  function mkPin(lat,lon){var m=new THREE.Mesh(new THREE.SphereGeometry(.82,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));m.userData={lat:lat,lon:lon};var pm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.42,side:THREE.DoubleSide});var pr=new THREE.Mesh(new THREE.RingGeometry(1.1,1.8,24),pm);pr.userData.pm=pm;scene.add(m,pr);return{p:m,pr:pr};}
+  var HW=mkPin(33.9,-118.3),CC=mkPin(28.4,-80.6);
+  scene.add(new THREE.AmbientLight(0xffffff,0.1));
+  var sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(320,80,180);scene.add(sun);
+  var fill=new THREE.DirectionalLight(0x223344,0.3);fill.position.set(-200,-60,-100);scene.add(fill);
+  var ct={x:0,y:0,z:300},lkt={x:0,y:0,z:0},ert=0,ers=0.0006,mx=0,my=0,tm=0;
+  function lerp(a,b,f){return a+(b-a)*f;}
+  window.addEventListener('mousemove',function(e){mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2;});
+  window.addEventListener('resize',function(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+  function anim(){
+    requestAnimationFrame(anim);tm+=0.008;
+    camera.position.x=lerp(camera.position.x,ct.x+mx*3.5,0.05);
+    camera.position.y=lerp(camera.position.y,ct.y+my*-2.5,0.05);
+    camera.position.z=lerp(camera.position.z,ct.z,0.05);
+    camera.lookAt(lkt.x,lkt.y,lkt.z);
+    ert+=ers;earth.rotation.y=ert;
+    [HW,CC].forEach(function(pin){var pos=ll3(pin.p.userData.lat,pin.p.userData.lon+ert*180/Math.PI,R);pin.p.position.copy(pos);pin.pr.position.copy(pos);pin.pr.lookAt(pos.clone().multiplyScalar(3));var s=1+Math.sin(tm*2.8)*0.38;pin.pr.scale.set(s,s,1);pin.pr.userData.pm.opacity=0.35+Math.sin(tm*2.8)*0.18;});
+    rings[0].rotation.y=tm*0.2;rings[1].rotation.y=tm*-0.13;rings[2].rotation.y=tm*0.09;rings[3].rotation.y=tm*-0.07;
+    sats.forEach(function(s){s.userData.angle+=s.userData.spd*0.01;var a=s.userData.angle,r=s.userData.orR,tx=s.userData.tx;s.position.set(Math.cos(a)*r,Math.sin(a)*r*Math.sin(tx),Math.sin(a)*r*Math.cos(tx));s.userData.hist.push(s.position.clone());if(s.userData.hist.length>22)s.userData.hist.shift();var arr=s.userData.trail.geometry.attributes.position;for(var i=0;i<22;i++){var pp=s.userData.hist[i]||s.position;arr.array[i*3]=pp.x;arr.array[i*3+1]=pp.y;arr.array[i*3+2]=pp.z;}arr.needsUpdate=true;});
+    starField.rotation.y=tm*0.0008;
+    renderer.render(scene,camera);
+  }
+  anim();
+  window.CAM={set:function(t){ct=t;},look:function(l){lkt=l;},spd:function(s){ers=s;}};
+} catch(e){console.warn('WebGL:',e);}
+</script>
+
+<script>
+try {
+  var sl=document.getElementById('slayer');
+  var cv=document.createElement('canvas');cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%';cv.width=window.innerWidth;cv.height=window.innerHeight;sl.appendChild(cv);
+  var ctx=cv.getContext('2d');var dots=[];
+  for(var i=0;i<160;i++){dots.push({x:Math.random()*cv.width,y:Math.random()*cv.height,vx:(Math.random()-.5)*.32,vy:(Math.random()-.5)*.16,r:Math.random()*.85+.3,a:Math.random()*.55+.2});}
+  function drawSL(){ctx.clearRect(0,0,cv.width,cv.height);for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=cv.width;if(d.x>cv.width)d.x=0;if(d.y<0)d.y=cv.height;if(d.y>cv.height)d.y=0;ctx.fillStyle='rgba(255,255,255,'+d.a+')';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();}
+  for(var i=0;i<dots.length;i++){for(var j=i+1;j<dots.length;j++){var dx=dots[j].x-dots[i].x,dy=dots[j].y-dots[i].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<85){ctx.strokeStyle='rgba(255,255,255,'+((1-dist/85)*0.055)+')';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.stroke();}}}requestAnimationFrame(drawSL);}
+  drawSL();window.addEventListener('resize',function(){cv.width=window.innerWidth;cv.height=window.innerHeight;});
+} catch(e){console.warn('Starlink:',e);}
+</script>
+
+<script>
+(function(){
+  function lerp(a,b,f){return a+(b-a)*f;}
+  function el(id){return document.getElementById(id);}
+  function show(id){var e=el(id);if(e){e.style.opacity='1';e.style.pointerEvents='all';}}
+  function hide(id){var e=el(id);if(e){e.style.opacity='0';e.style.pointerEvents='none';}}
+  function scramble(elem,txt,ms,cb){
+    var CH='ABCDEFGHIJKLMNOPQRSTUVWXYZ.$0123456789 ';
+    var f=0,total=Math.round(ms/45);
+    elem.style.opacity='1';
+    var iv=setInterval(function(){
+      var o='';for(var i=0;i<txt.length;i++){if(txt[i]===' '){o+=' ';continue;}o+=(f/total>i/txt.length)?txt[i]:CH[Math.floor(Math.random()*CH.length)];}
+      elem.textContent=o;f++;
+      if(f>=total){elem.textContent=txt;clearInterval(iv);if(cb)cb();}
+    },45);
+  }
+  function flash(){var f=el('flash');f.style.transition='opacity 0.06s';f.style.opacity='0.05';setTimeout(function(){f.style.transition='opacity 0.28s';f.style.opacity='0';},60);}
+  var introGone=false;
+  setTimeout(function(){el('i-eye').style.opacity='1';},300);
+  setTimeout(function(){var t=el('i-title');t.style.transition='opacity .4s';t.style.opacity='1';scramble(t,'SPACEX STOCKS',1700);},700);
+  setTimeout(function(){el('i-line').style.width='260px';},1300);
+  setTimeout(function(){el('i-sub').style.opacity='1';},1700);
+  setTimeout(function(){el('i-status').style.opacity='1';},2100);
+  setTimeout(function(){
+    var intro=el('intro');intro.style.transition='opacity 1.1s ease';intro.style.opacity='0';
+    setTimeout(function(){
+      intro.style.display='none';introGone=true;
+      el('nav').classList.add('show');el('prog').classList.add('show');el('dots').classList.add('show');
+      el('shint').classList.add('show');el('ticker').classList.add('show');el('mbar').classList.add('show');
+      el('live-strip').style.opacity='1';
+      loadLiveFeed();
+      beginScroll();
+    },1100);
+  },3600);
+  var sc=0,tsc=0;
+  async function loadLiveFeed(){
+  try{
+    var res=await fetch('/api/public/activity-feed');
+    var data=await res.json();
+    var entries=data.entries||[];
+    if(!entries.length)return;
+    var inner=el('live-inner');
+    var html='';
+    var doubled=[...entries,...entries];
+    doubled.forEach(function(e){
+      html+='<div class="live-item">';
+      html+='<div class="li-dot"></div>';
+      html+='<span class="li-cur">'+e.currency+'</span>';
+      html+='<span class="li-amt">$'+Number(e.amount).toLocaleString()+'</span>';
+      html+='<span class="li-lbl">DEPOSIT RECEIVED</span>';
+      html+='<span class="li-time">'+e.time_ago+'</span>';
+      html+='</div>';
+    });
+    inner.innerHTML=html;
+  }catch(e){}
+}
+  function beginScroll(){
+    window.addEventListener('wheel',function(e){if(!introGone)return;tsc=Math.max(0,Math.min(1,tsc+e.deltaY*0.00026));},{passive:true});
+    var ty=0;
+    window.addEventListener('touchstart',function(e){ty=e.touches[0].clientY;},{passive:true});
+    window.addEventListener('touchmove',function(e){if(!introGone)return;var d=ty-e.touches[0].clientY;tsc=Math.max(0,Math.min(1,tsc+d*0.0018));ty=e.touches[0].clientY;},{passive:true});
+    document.querySelectorAll('.dot').forEach(function(d){d.addEventListener('click',function(){tsc=parseInt(d.dataset.si)/8;});});
+    el('nav-cta').addEventListener('click',function(){sc=1;tsc=1;});
+    el('nav-how').addEventListener('click',function(e){e.preventDefault();sc=0.55;tsc=0.55;});
+    el('nav-plans').addEventListener('click',function(e){e.preventDefault();sc=0.67;tsc=0.67;});
+    el('nav-perks').addEventListener('click',function(e){e.preventDefault();sc=0.79;tsc=0.79;});
+    requestAnimationFrame(loop);
+  }
+  var BP=[0,.11,.22,.33,.44,.55,.66,.78,.89,1];
+  var lastSI=-1,finDone=false;
+  var CAMS=[{x:0,y:0,z:300},{x:42,y:-16,z:90},{x:-20,y:-26,z:86},{x:0,y:0,z:192},{x:0,y:68,z:210},{x:-52,y:20,z:252},{x:52,y:-12,z:265},{x:0,y:0,z:285},{x:0,y:0,z:375}];
+  var LOOKS=[{x:0,y:0,z:0},{x:10,y:-5,z:0},{x:-8,y:-8,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0}];
+  var MISSIONS=['FALCON 9 · STANDBY','FALCON 9 · HAWTHORNE PREP','FALCON 9 · LC-39A READY','STARSHIP · ORBITAL INSERTION','STARLINK V4 · CONSTELLATION PASS','DRAGON · ISS APPROACH','STARSHIP · STAGE SEPARATION','FALCON 9 · BOOSTER RECOVERY','MISSION CONTROL · ACTIVE'];
+  function loop(){
+    requestAnimationFrame(loop);
+    sc=lerp(sc,tsc,0.062);
+    var pct=Math.round(sc*100);
+    el('prog-fill').style.height=pct+'%';
+    el('prog-pct').textContent=(pct<10?'0':'')+pct+'%';
+    var si=0;for(var i=0;i<BP.length-1;i++){if(sc>=BP[i]&&sc<BP[i+1]){si=i;break;}}
+    if(sc>=0.97)si=8;
+    var sp=(si<8)?(sc-BP[si])/(BP[si+1]-BP[si]):1;
+    document.querySelectorAll('.dot').forEach(function(d,i){d.classList.toggle('active',i===si);});
+    if(sc>0.04)hide('shint');else el('shint').classList.add('show');
+    if(window.CAM){
+      var nc=CAMS[si]||CAMS[8],nxt=CAMS[Math.min(si+1,8)];
+      var nl=LOOKS[si]||LOOKS[8],nlk=LOOKS[Math.min(si+1,8)];
+      window.CAM.set({x:lerp(nc.x,nxt.x,sp),y:lerp(nc.y,nxt.y,sp),z:lerp(nc.z,nxt.z,sp)});
+      window.CAM.look({x:lerp(nl.x,nlk.x,sp),y:lerp(nl.y,nlk.y,sp),z:lerp(nl.z,nlk.z,sp)});
+      window.CAM.spd(0.0006+Math.abs(tsc-sc)*0.005);
+    }
+    ['p-hw','p-cc','fin','p-sl','why','plans','testi','cta','globe-text'].forEach(hide);
+    if(si===0){show('globe-text');}
+    el('slayer').style.opacity='0';
+    el('alloc').classList.remove('show');
+    el('reticle').style.opacity='0';
+    el('rwire').style.opacity='0';
+    if(si===1&&sp>.2){
+      show('p-hw');
+      var ret=el('reticle');ret.style.opacity='1';
+      ret.style.left=Math.round(window.innerWidth*.62)+'px';ret.style.top=Math.round(window.innerHeight*.47)+'px';
+      el('r-stat').textContent='LOCKED';el('r-name').textContent='HAWTHORNE, CA';
+      el('r-sub').textContent='SpaceX HQ · EST. 2002';el('r-co').textContent='33.9°N · 118.3°W';
+      var rw=el('rwire');rw.style.opacity='1';rw.style.transform='translateY('+Math.round((1-Math.min(sp*2.5,1))*55)+'px)';
+    }
+    if(si===2&&sp>.18){
+      show('p-cc');
+      var ret=el('reticle');ret.style.opacity='1';
+      ret.style.left=Math.round(window.innerWidth*.5)+'px';ret.style.top=Math.round(window.innerHeight*.52)+'px';
+      el('r-stat').textContent='TRACKING';el('r-name').textContent='CAPE CANAVERAL, FL';
+      el('r-sub').textContent='LC-39A · Kennedy Space Center';el('r-co').textContent='28.4°N · 80.6°W';
+    }
+    if(si===3&&sp>.15){show('fin');if(!finDone){finDone=true;animBars();}}
+    if(si===4&&sp>.12){show('p-sl');el('slayer').style.opacity='1';}
+    if(si===5)show('why');
+    if(si===6){var p=el('plans');if(p){p.style.opacity='1';p.style.pointerEvents='all';}}
+    if(si===7)show('testi');
+    if(si===8){show('cta');el('alloc').classList.add('show');}
+    if(si!==lastSI){if(lastSI>=0)flash();lastSI=si;var mv=el('mb-v');if(mv)mv.textContent=MISSIONS[si]||'SYSTEMS NOMINAL';}
+  }
+  function animBars(){
+    ['fb0','fb1','fb2','fb3','fb4'].forEach(function(id,i){setTimeout(function(){var e=el(id);if(e)e.style.width=e.dataset.w+'%';},i*190);});
+  }
+  var spce=160.0;
+  setInterval(function(){
+    spce+=(Math.random()-.48)*.52;
+    var pe=el('tp1');if(pe)pe.textContent='$'+spce.toFixed(2);
+    var pct=((spce-120)/120*100).toFixed(2);
+    var ce=el('tc1');if(ce){ce.textContent=(pct>0?'▲ +':'▼ ')+Math.abs(pct)+'%';ce.className='ti-c '+(pct>0?'up':'dn');}
+  },2200);
+  var h=71,m=59,s=42;
+  setInterval(function(){s--;if(s<0){s=59;m--;}if(m<0){m=59;h--;}if(h<0){h=0;m=0;s=0;}var pad=function(n){return(n<10?'0':'')+n;};var at=el('al-t');if(at)at.textContent=pad(h)+':'+pad(m)+':'+pad(s);},1000);
+  el('code-in').addEventListener('input',function(e){e.target.value=e.target.value.toUpperCase();});
+
+  // Invite code — hits real API
+  el('cta-btn').addEventListener('click', async function(){
+    var code=el('code-in').value.trim();
+    var msg=el('cta-msg');
+    if(!code){el('code-in').style.borderColor='rgba(255,80,80,.3)';return;}
+    try{
+      var res=await fetch('/api/auth/check-invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+      var data=await res.json();
+      if(data.valid){
+        msg.textContent='✓ CODE ACCEPTED — WELCOME TO THE MISSION';
+        msg.style.opacity='1';msg.style.color='rgba(255,255,255,.38)';
+        el('code-in').style.borderColor='rgba(255,255,255,.35)';
+        setTimeout(function(){window.location.href='/login?code='+code;},1200);
+      } else {
+        msg.textContent='✗ INVALID CODE · CONTACT INVEST@SPACESTOCKS.FINANCE';
+        msg.style.opacity='1';msg.style.color='rgba(255,80,80,.38)';
+        el('code-in').style.borderColor='rgba(255,80,80,.3)';
+      }
+    } catch(e){
+      msg.textContent='✗ ERROR · PLEASE TRY AGAIN';
+      msg.style.opacity='1';
+    }
+    setTimeout(function(){msg.style.opacity='0';el('code-in').style.borderColor='rgba(255,255,255,.12)';},4000);
+  });
+
+  el('code-in').addEventListener('keydown',function(e){if(e.key==='Enter')el('cta-btn').click();});
+  el('contact-link').addEventListener('click',function(){window.location.href='mailto:invest@spacestocks.finance';});
+})();
+</script>
+
+<!-- Chat Widget -->
+<div id="sx-chat-widget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'Courier New',monospace;"></div>
+
+<script>
+(function() {
+  const widget = document.getElementById('sx-chat-widget');
+  let open = false, sessionId = localStorage.getItem('sx_chat_session'), step = sessionId ? 'chat' : 'intro';
+  let form = JSON.parse(localStorage.getItem('sx_chat_form') || '{"name":"","email":"","subject":""}');
+  let pollInterval = null;
+
+  function render() {
+    widget.innerHTML = `
+      <style>
+        .sx-w { position:absolute; bottom:68px; right:0; width:320px; height:480px; background:#0a0a0a; border:1px solid rgba(192,192,192,0.12); display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.8); }
+        .sx-hdr { background:#000; border-bottom:1px solid rgba(192,192,192,0.1); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+        .sx-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+        .sx-inp-area { border-top:1px solid rgba(192,192,192,0.08); padding:10px 12px; display:flex; gap:8px; }
+        .sx-inp { flex:1; background:transparent; border:1px solid rgba(255,255,255,0.1); padding:8px 10px; color:#fff; font-family:'Courier New',monospace; font-size:11px; outline:none; }
+        .sx-inp::placeholder { color:rgba(255,255,255,0.2); }
+        .sx-btn { background:#fff; border:none; width:32px; height:32px; cursor:pointer; color:#000; font-size:14px; display:flex; align-items:center; justify-content:center; }
+        .sx-fi { padding:16px; display:flex; flex-direction:column; gap:10px; flex:1; overflow-y:auto; }
+        .sx-fi input { width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); padding:9px 10px; color:#fff; font-family:'Courier New',monospace; font-size:11px; outline:none; box-sizing:border-box; }
+        .sx-fi input::placeholder { color:rgba(255,255,255,0.2); }
+        .sx-lbl { font-size:7px; letter-spacing:0.3em; text-transform:uppercase; color:rgba(255,255,255,0.2); margin-bottom:3px; }
+        .sx-sub { width:100%; background:#fff; border:none; padding:11px; color:#000; font-family:'Courier New',monospace; font-size:8px; font-weight:700; letter-spacing:0.35em; text-transform:uppercase; cursor:pointer; margin-top:4px; }
+        .sx-sub:disabled { opacity:0.5; cursor:not-allowed; }
+        .msg-u { align-self:flex-end; background:#fff; color:#000; padding:9px 12px; font-size:11px; max-width:80%; line-height:1.6; }
+        .msg-a { align-self:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#fff; padding:9px 12px; font-size:11px; max-width:80%; line-height:1.6; }
+        .msg-t { font-size:8px; color:rgba(255,255,255,0.2); margin-top:3px; }
+      </style>
+      ${open ? `
+      <div class="sx-w">
+        <div class="sx-hdr">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;background:rgba(192,192,192,0.08);border:1px solid rgba(192,192,192,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;">💬</div>
+            <div>
+              <div style="font-size:9px;letter-spacing:0.3em;color:#fff;text-transform:uppercase;">SpaceX Stocks</div>
+              <div style="font-size:8px;color:rgba(192,192,192,0.4);margin-top:2px;">● Support Online</div>
+            </div>
+          </div>
+          <button onclick="toggleChat()" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:18px;">×</button>
+        </div>
+        ${step === 'intro' ? `
+        <div class="sx-fi">
+          <div>
+            <div style="font-size:14px;color:#fff;margin-bottom:6px;">Hello 👋</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.3);line-height:1.8;">Welcome to SpaceX Stocks support. Fill in your details and we'll be right with you.</div>
+          </div>
+          <div><div class="sx-lbl">Your Name *</div><input id="cx-name" placeholder="Full name" value="${form.name}" oninput="form.name=this.value" /></div>
+          <div><div class="sx-lbl">Email *</div><input id="cx-email" type="email" placeholder="your@email.com" value="${form.email}" oninput="form.email=this.value" /></div>
+          <div><div class="sx-lbl">How can we help?</div><input id="cx-subject" placeholder="Brief description..." value="${form.subject}" oninput="form.subject=this.value" /></div>
+          <button class="sx-sub" onclick="startChat()">Start Chat →</button>
+          <div style="font-size:8px;color:rgba(255,255,255,0.2);text-align:center;">Typical response: under 5 minutes</div>
+        </div>
+        ` : `
+        <div class="sx-body" id="sx-msgs">
+          <div style="align-self:flex-start;">
+            <div class="msg-a">Hello ${form.name}! 👋 Thank you for contacting SpaceX Stocks support. Our team will be with you shortly.</div>
+            <div class="msg-t">Support Team</div>
+          </div>
+        </div>
+        <div class="sx-inp-area">
+          <input class="sx-inp" id="sx-msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()" />
+          <button class="sx-btn" onclick="sendMsg()">→</button>
+        </div>
+        `}
+      </div>` : ''}
+      <button onclick="toggleChat()" style="width:52px;height:52px;background:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-size:20px;">
+        ${open ? '<span style="color:#000;font-size:20px;">×</span>' : '💬'}
+      </button>
+    `;
+
+    if (open && step === 'chat') {
+      loadMessages();
+    }
+  }
+
+  window.toggleChat = function() { open = !open; render(); }
+window.startNewChat = function() {
+    ['sx_chat_session', 'sx_chat_step', 'sx_chat_form', 'sx_chat_closed'].forEach(k => localStorage.removeItem(k))
+    sessionId = null; step = 'intro'; open = true;
+    form = { name: '', email: '', subject: '' };
+    if (pollInterval) clearInterval(pollInterval);
+    render();
+  }
+  
+  window.startChat = function() {
+    const name = document.getElementById('cx-name')?.value || form.name;
+    const email = document.getElementById('cx-email')?.value || form.email;
+    const subject = document.getElementById('cx-subject')?.value || form.subject;
+    if (!name || !email) return;
+    form = { name, email, subject };
+    sessionId = 'sx_' + Date.now() + '_' + Math.random().toString(36).substr(2,9);
+    localStorage.setItem('sx_chat_session', sessionId);
+    localStorage.setItem('sx_chat_form', JSON.stringify(form));
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, message: subject || 'Hello, I need help.', sender: name, user_email: email, user_name: name, is_admin: false })
+    });
+    step = 'chat';
+    render();
+    startPolling();
+  }
+
+  window.sendMsg = function() {
+    const input = document.getElementById('sx-msg-input');
+    const msg = input?.value?.trim();
+    if (!msg || !sessionId) return;
+    input.value = '';
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, message: msg, sender: form.name, user_email: form.email, user_name: form.name, is_admin: false })
+    }).then(() => loadMessages());
+    // Optimistic
+    const msgs = document.getElementById('sx-msgs');
+    if (msgs) {
+      const div = document.createElement('div');
+      div.style.alignSelf = 'flex-end';
+      div.innerHTML = `<div class="msg-u">${msg}</div><div class="msg-t" style="text-align:right;">You</div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  }
+
+  function loadMessages() {
+    if (!sessionId) return;
+    fetch('/api/chat?session_id=' + sessionId)
+      .then(r => r.json())
+      .then(data => {
+        // Handle closed state
+        if (data.closed) {
+          const inputArea = document.querySelector('.sx-inp-area');
+          if (inputArea) {
+            inputArea.innerHTML = `
+              <div style="width:100%;text-align:center;padding:12px;font-family:'Courier New',monospace;font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:0.1em;">
+                This chat has been closed by support.
+                <button onclick="startNewChat()" style="display:block;margin:8px auto 0;background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:6px 14px;font-family:'Courier New',monospace;font-size:8px;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;">Start New Chat</button>
+              </div>`;
+          }
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+
+        const msgs = document.getElementById('sx-msgs');
+        if (!msgs) return;
+        const existing = msgs.querySelectorAll('.chat-msg').length;
+        (data.messages || []).forEach((msg, i) => {
+          if (i < existing) return;
+          const div = document.createElement('div');
+          div.className = 'chat-msg';
+          div.style.alignSelf = msg.is_admin ? 'flex-start' : 'flex-end';
+          const time = new Date(msg.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+          div.innerHTML = `<div class="${msg.is_admin ? 'msg-a' : 'msg-u'}">${msg.message}</div><div class="msg-t" style="text-align:${msg.is_admin?'left':'right'}">${msg.is_admin?'Support':'You'} · ${time}</div>`;
+          msgs.appendChild(div);
+        });
+        msgs.scrollTop = msgs.scrollHeight;
+      });
+  }
+
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => { if (open && step === 'chat') loadMessages(); }, 3000);
+  }
+
+  if (sessionId) { step = 'chat'; startPolling(); }
+  render();
+})();
+</script>
+</body>
+</html>

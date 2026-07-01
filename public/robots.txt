@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://spacexstocks.finance/sitemap.xml

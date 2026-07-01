@@ -71,24 +71,24 @@ export default function PerksPage() {
       {/* Unlocked perks */}
       {userPerks.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(0,212,255,0.6)', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ display: 'inline-block', width: 16, height: 1, background: 'rgba(0,212,255,0.4)' }}></span>
+          <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(192,192,192,0.6)', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ display: 'inline-block', width: 16, height: 1, background: 'rgba(192,192,192,0.4)' }}></span>
             Unlocked Perks
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 10 }}>
             {userPerks.map((perk, i) => (
-              <div key={i} style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.15)', padding: '18px 16px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(0,212,255,0.5),transparent)' }} />
+              <div key={i} style={{ background: 'rgba(192,192,192,0.04)', border: '1px solid rgba(192,192,192,0.15)', padding: '18px 16px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(192,192,192,0.5),transparent)' }} />
                 <div style={{ fontSize: 20, marginBottom: 10 }}>{getPerkIcon(perk)}</div>
                 <div style={{ fontSize: 10, letterSpacing: '0.04em', color: '#fff', lineHeight: 1.7, marginBottom: 8 }}>{perk}</div>
-                <div style={{ fontSize: 7, letterSpacing: '0.28em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase' }}>✓ Unlocked</div>
+                <div style={{ fontSize: 7, letterSpacing: '0.28em', color: 'rgba(192,192,192,0.5)', textTransform: 'uppercase' }}>✓ Unlocked</div>
               </div>
             ))}
           </div>
           <div style={{ marginTop: 16, border: '1px solid rgba(255,255,255,0.05)', padding: '14px 18px', background: 'rgba(255,255,255,0.01)' }}>
             <div style={{ fontSize: 8, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 6 }}>Activate Your Perks</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em', lineHeight: 2 }}>
-              Email us with your account details to activate: <span style={{ color: 'rgba(0,212,255,0.6)' }}>invest@spacestocks.finance</span>
+              Email us with your account details to activate: <span style={{ color: 'rgba(192,192,192,0.6)' }}>invest@spacestocks.finance</span>
             </div>
           </div>
         </div>
@@ -105,12 +105,12 @@ export default function PerksPage() {
           const isUnlocked = planIndex <= currentPlanIndex
           const isCurrent = plan === currentPlanName
           return (
-            <div key={plan} style={{ border: `1px solid ${isCurrent ? 'rgba(0,212,255,0.2)' : isUnlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`, padding: '16px 18px', marginBottom: 8, opacity: isUnlocked ? 1 : 0.45, background: isCurrent ? 'rgba(0,212,255,0.02)' : 'transparent' }}>
+            <div key={plan} style={{ border: `1px solid ${isCurrent ? 'rgba(192,192,192,0.2)' : isUnlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`, padding: '16px 18px', marginBottom: 8, opacity: isUnlocked ? 1 : 0.45, background: isCurrent ? 'rgba(192,192,192,0.02)' : 'transparent' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontSize: 9, letterSpacing: '0.38em', color: isCurrent ? 'rgba(0,212,255,0.7)' : isUnlocked ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 9, letterSpacing: '0.38em', color: isCurrent ? 'rgba(192,192,192,0.7)' : isUnlocked ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
                   {!isUnlocked && '🔒 '}{plan}
                 </div>
-                {isCurrent && <div style={{ fontSize: 7, letterSpacing: '0.28em', color: 'rgba(0,212,255,0.5)', border: '1px solid rgba(0,212,255,0.2)', padding: '2px 10px', textTransform: 'uppercase' }}>Current</div>}
+                {isCurrent && <div style={{ fontSize: 7, letterSpacing: '0.28em', color: 'rgba(192,192,192,0.5)', border: '1px solid rgba(192,192,192,0.2)', padding: '2px 10px', textTransform: 'uppercase' }}>Current</div>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {PLAN_PERKS[plan].map((p, i) => (
@@ -123,7 +123,7 @@ export default function PerksPage() {
           )
         })}
         {currentPlanIndex < ORDER.length - 1 && (
-          <button onClick={() => router.push('/dashboard/invest')} style={{ marginTop: 16, background: 'transparent', border: '1px solid rgba(0,212,255,0.2)', color: 'rgba(0,212,255,0.6)', padding: '11px 24px', fontFamily: "'Courier New',monospace", fontSize: 9, letterSpacing: '0.28em', cursor: 'pointer', textTransform: 'uppercase' }}>
+          <button onClick={() => router.push('/dashboard/invest')} style={{ marginTop: 16, background: 'transparent', border: '1px solid rgba(192,192,192,0.2)', color: 'rgba(192,192,192,0.6)', padding: '11px 24px', fontFamily: "'Courier New',monospace", fontSize: 9, letterSpacing: '0.28em', cursor: 'pointer', textTransform: 'uppercase' }}>
             Upgrade Plan to Unlock More →
           </button>
         )}

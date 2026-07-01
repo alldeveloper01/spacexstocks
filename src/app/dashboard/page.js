@@ -11,13 +11,13 @@ function RadarSweep({ size = 80 }) {
     function draw() {
       ctx.clearRect(0, 0, size, size)
       const cx = size/2, cy = size/2, r = size/2 - 4
-      ctx.strokeStyle = 'rgba(0,212,255,0.12)'; ctx.lineWidth = 0.5
+      ctx.strokeStyle = 'rgba(192,192,192,0.12)'; ctx.lineWidth = 0.5
       ;[r*0.33,r*0.66,r].forEach(rad=>{ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.stroke()})
       ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke()
       ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke()
       ctx.save();ctx.translate(cx,cy);ctx.rotate(angle)
       const g=ctx.createLinearGradient(0,0,r,0)
-      g.addColorStop(0,'rgba(0,212,255,0.5)');g.addColorStop(1,'rgba(0,212,255,0)')
+      g.addColorStop(0,'rgba(192,192,192,0.5)');g.addColorStop(1,'rgba(192,192,192,0)')
       ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,-0.3,0);ctx.closePath()
       ctx.fillStyle=g;ctx.fill();ctx.restore()
       angle+=0.03;frame=requestAnimationFrame(draw)
@@ -32,23 +32,50 @@ function MiniChart({ prices }) {
   if (!prices||prices.length<2) return null
   const W=200,H=48,min=Math.min(...prices),max=Math.max(...prices),range=max-min||1
   const pts=prices.map((p,i)=>`${(i/(prices.length-1))*W},${H-((p-min)/range)*(H-8)-4}`).join(' ')
-  const area=`M0,${H} L${pts.split(' ').join(' L')} L${W},${H} Z`
+  const areaPoints=`0,${H} ${pts.split(' ').join(' ')} ${W},${H}`
   return (
     <svg width={W} height={H} style={{display:'block',overflow:'visible'}}>
-      <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00D4FF" stopOpacity="0.3"/><stop offset="100%" stopColor="#00D4FF" stopOpacity="0"/></linearGradient></defs>
-      <path d={area} fill="url(#cg)"/>
-      <polyline points={pts} fill="none" stroke="#00D4FF" strokeWidth="1.5" strokeLinejoin="round"/>
+      <defs>
+        <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#C0C0C0" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="#C0C0C0" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <polygon points={areaPoints} fill="url(#cg)"/>
+      <polyline points={pts} fill="none" stroke="#C0C0C0" strokeWidth="1.5" strokeLinejoin="round"/>
     </svg>
   )
 }
 
-function ProgressArc({ pct, size=56 }) {
+function ProgressArc({ pct, size=52 }) {
   const r=size/2-5,circ=2*Math.PI*r,dash=(pct/100)*circ
   return (
-    <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3"/>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#00D4FF" strokeWidth="3" strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{transition:'stroke-dasharray 1s ease'}}/>
+    <svg width={size} height={size} style={{transform:'rotate(-90deg)',flexShrink:0}}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2.5"/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#C0C0C0" strokeWidth="2.5"
+        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+        style={{transition:'stroke-dasharray 1s ease'}}/>
     </svg>
+  )
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'70vh',flexDirection:'column',gap:24}}>
+      <RadarSweep size={72}/>
+      <div style={{fontFamily:"'Courier New',monospace",fontSize:8,letterSpacing:'0.5em',color:'rgba(192,192,192,0.4)',textTransform:'uppercase'}}>
+        Initializing Mission Control
+      </div>
+      <div style={{display:'flex',gap:4}}>
+        {[0,1,2].map(i=>(
+          <div key={i} style={{
+            width:4,height:4,background:'rgba(192,192,192,0.4)',
+            animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite`,
+          }}/>
+        ))}
+      </div>
+      <style>{`@keyframes pulse{0%,100%{opacity:0.2}50%{opacity:1}}`}</style>
+    </div>
   )
 }
 
@@ -56,143 +83,254 @@ export default function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [investments, setInvestments] = useState([])
-  const [spce, setSpce] = useState(160.00)
-  const [priceHistory, setPriceHistory] = useState([160])
+  const [spce, setSpce] = useState(153.23)
+  const [priceHistory, setPriceHistory] = useState([153.23])
+  const [ipoChangePct, setIpoChangePct] = useState('13.50')
+  const [dayChangePct, setDayChangePct] = useState('0.15')
   const [loading, setLoading] = useState(true)
   const [scanLine, setScanLine] = useState(0)
+  const [greeting, setGreeting] = useState('Hello')
   const token = typeof window !== 'undefined' ? localStorage.getItem('sx_token') : null
 
   useEffect(() => {
-    if (!token) { router.push('/login'); return }
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('deposit')==='success') window.history.replaceState({},'','/dashboard')
-    fetch('/api/auth',{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>{if(d.error)router.push('/login');else setUser(d)})
-    fetch('/api/plans',{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>{setInvestments(d.investments||[]);setLoading(false)})
-    const iv=setInterval(()=>{setSpce(p=>{const n=Math.max(150,p+(Math.random()-0.48)*0.5);setPriceHistory(h=>[...h.slice(-49),n]);return n})},2000)
-    const sl=setInterval(()=>setScanLine(l=>(l+1)%100),30)
-    return ()=>{clearInterval(iv);clearInterval(sl)}
-  },[])
+    const h = new Date().getHours()
+    if (h < 12) setGreeting('Good morning')
+    else if (h < 17) setGreeting('Good afternoon')
+    else setGreeting('Good evening')
+  }, [])
 
-  const activeInv=investments.filter(i=>i.status==='active')
-  const totalInvested=activeInv.reduce((s,i)=>s+i.amount,0)
-  const weeklyReturn=activeInv.reduce((s,i)=>s+i.weekly_return,0)
-  const prcUp=priceHistory.length>1&&spce>=priceHistory[priceHistory.length-2]
-  const daysLeft=inv=>!inv.end_date?0:Math.max(0,Math.ceil((new Date(inv.end_date)-new Date())/86400000))
-  const planProgress=inv=>{
-    if(!inv.end_date||!inv.created_at)return 0
-    return Math.min(100,Math.round((Date.now()-new Date(inv.created_at))/(new Date(inv.end_date)-new Date(inv.created_at))*100))
+  useEffect(() => {
+    if (!token) { router.push('/login'); return }
+
+    fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => { if (d.error) router.push('/login'); else setUser(d) })
+
+    fetch('/api/plans', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => { setInvestments(d.investments || []); setLoading(false) })
+
+    const fetchPrice = async () => {
+      try {
+        const r = await fetch('/api/public/spcx-price')
+        const d = await r.json()
+        const p = parseFloat(d.price)
+        setSpce(p)
+        setPriceHistory(h => [...h.slice(-49), p])
+        setIpoChangePct(d.ipo_change_pct)
+        setDayChangePct(d.change_pct)
+      } catch {}
+    }
+    fetchPrice()
+    const iv = setInterval(fetchPrice, 60000)
+    const sl = setInterval(() => setScanLine(l => (l + 1) % 100), 30)
+    return () => { clearInterval(iv); clearInterval(sl) }
+  }, [])
+
+  const activeInv = investments.filter(i => i.status === 'active')
+  const totalInvested = activeInv.reduce((s, i) => s + i.amount, 0)
+  const weeklyReturn = activeInv.reduce((s, i) => s + i.weekly_return, 0)
+  const daysLeft = inv => !inv.end_date ? 0 : Math.max(0, Math.ceil((new Date(inv.end_date) - new Date()) / 86400000))
+  const planProgress = inv => {
+    if (!inv.end_date || !inv.created_at) return 0
+    return Math.min(100, Math.round((Date.now() - new Date(inv.created_at)) / (new Date(inv.end_date) - new Date(inv.created_at)) * 100))
   }
 
-  if (loading) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh'}}>
-      <div style={{textAlign:'center'}}>
-        <RadarSweep size={80}/>
-        <div style={{fontSize:9,letterSpacing:'0.4em',color:'rgba(0,212,255,0.5)',marginTop:16,textTransform:'uppercase'}}>Initializing...</div>
-      </div>
-    </div>
-  )
+  if (loading) return <LoadingScreen />
+
+  const dayUp = parseFloat(dayChangePct) >= 0
+  const ipoUp = parseFloat(ipoChangePct) >= 0
 
   return (
     <div>
-      {/* Top bar */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:28,flexWrap:'wrap',gap:16}}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <div style={{fontSize:'clamp(20px,3vw,28px)',fontWeight:400,letterSpacing:'-0.01em'}}>Hello, {user?.full_name?.split(' ')[0]}.</div>
-          <div style={{fontSize:8,letterSpacing:'0.4em',color:'rgba(255,255,255,0.25)',textTransform:'uppercase',marginTop:4}}>Mission Control · Your Portfolio</div>
+          <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, letterSpacing: '0.42em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 8 }}>
+            {greeting},
+          </div>
+          <div style={{ fontFamily: "'Courier New',monospace", fontSize: 'clamp(24px,4vw,36px)', fontWeight: 400, letterSpacing: '-0.01em', color: '#fff' }}>
+            {user?.full_name?.split(' ')[0]}.
+          </div>
+          <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', marginTop: 6 }}>
+            Mission Control · Your Portfolio
+          </div>
         </div>
-        <div style={{background:'rgba(0,212,255,0.05)',border:'1px solid rgba(0,212,255,0.15)',padding:'12px 20px',minWidth:220}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',gap:20}}>
+
+        {/* SPCX ticker */}
+        <div style={{ background: 'rgba(192,192,192,0.04)', border: '1px solid rgba(192,192,192,0.12)', padding: '16px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24 }}>
             <div>
-              <div style={{fontSize:7,letterSpacing:'0.35em',color:'rgba(0,212,255,0.6)',textTransform:'uppercase',marginBottom:4}}>SPCE · Live</div>
-              <div style={{fontSize:22,letterSpacing:'-0.02em'}}>${spce.toFixed(2)}</div>
-              <div style={{fontSize:9,color:prcUp?'#00D4FF':'rgba(255,80,80,0.7)',marginTop:2}}>{prcUp?'▲':'▼'} {((spce-120)/120*100).toFixed(2)}% since IPO</div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.38em', color: 'rgba(192,192,192,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>
+                SPCX · Live
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 24, letterSpacing: '-0.02em', color: '#fff' }}>
+                ${spce.toFixed(2)}
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 9, color: dayUp ? '#C0C0C0' : 'rgba(255,80,80,0.7)', marginTop: 4 }}>
+                {dayUp ? '▲' : '▼'} {dayChangePct}% today
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
+                {ipoUp ? '+' : ''}{ipoChangePct}% since IPO · $135
+              </div>
             </div>
-            <MiniChart prices={priceHistory}/>
+            <MiniChart prices={priceHistory} />
           </div>
         </div>
       </div>
 
-      {/* Balance cards with scan line */}
-      <div style={{position:'relative',marginBottom:20}}>
-        <div style={{position:'absolute',top:`${scanLine}%`,left:0,right:0,height:1,background:'linear-gradient(90deg,transparent,rgba(0,212,255,0.12),transparent)',zIndex:5,pointerEvents:'none'}}/>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:1,background:'rgba(0,212,255,0.04)'}}>
+      {/* Balance cards */}
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <div style={{ position: 'absolute', top: `${scanLine}%`, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg,transparent,rgba(192,192,192,0.1),transparent)', zIndex: 5, pointerEvents: 'none' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 1, background: 'rgba(192,192,192,0.04)' }}>
           {[
-            {label:'Available Balance',val:`$${(user?.balance||0).toLocaleString()}`,sub:'Ready to invest',color:'#00D4FF'},
-            {label:'Withdrawal Balance',val:`$${(user?.withdrawal_balance||0).toLocaleString()}`,sub:'Ready to withdraw',color:'#fff'},
-            {label:'Total Invested',val:`$${totalInvested.toLocaleString()}`,sub:`${activeInv.length} active plan${activeInv.length!==1?'s':''}`,color:'rgba(0,212,255,0.7)'},
-            {label:'Weekly Return',val:`$${weeklyReturn.toLocaleString()}`,sub:'Paid every 7 days',color:'#fff'},
-            {label:'Total Earned',val:`$${(user?.total_profit||0).toLocaleString()}`,sub:'All time profits',color:'rgba(0,212,255,0.7)'},
-          ].map((c,i)=>(
-            <div key={i} style={{background:'#000',padding:'20px 16px',border:'1px solid rgba(255,255,255,0.04)',borderTop:`2px solid ${c.color}`,position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:`radial-gradient(ellipse at top left,${c.color}08,transparent 70%)`,pointerEvents:'none'}}/>
-              <div style={{fontSize:7,letterSpacing:'0.35em',color:'rgba(255,255,255,0.2)',textTransform:'uppercase',marginBottom:8}}>{c.label}</div>
-              <div style={{fontSize:'clamp(16px,2.5vw,24px)',letterSpacing:'-0.02em',color:c.color}}>{c.val}</div>
-              <div style={{fontSize:8,color:'rgba(255,255,255,0.2)',marginTop:4}}>{c.sub}</div>
+            { label: 'Available Balance', val: `$${(user?.balance || 0).toLocaleString()}`, sub: 'Ready to invest', accent: '#C0C0C0' },
+            { label: 'Withdrawal Balance', val: `$${(user?.withdrawal_balance || 0).toLocaleString()}`, sub: 'Ready to withdraw', accent: 'rgba(255,255,255,0.6)' },
+            { label: 'Total Invested', val: `$${totalInvested.toLocaleString()}`, sub: `${activeInv.length} active plan${activeInv.length !== 1 ? 's' : ''}`, accent: 'rgba(192,192,192,0.6)' },
+            { label: 'Weekly Return', val: `$${weeklyReturn.toLocaleString()}`, sub: 'Paid every 7 days', accent: 'rgba(255,255,255,0.6)' },
+            { label: 'Total Earned', val: `$${(user?.total_profit || 0).toLocaleString()}`, sub: 'All time profits', accent: 'rgba(192,192,192,0.5)' },
+          ].map((c, i) => (
+            <div key={i} style={{ background: '#000', padding: '20px 18px', borderTop: `2px solid ${c.accent}`, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: `radial-gradient(ellipse at top left,${c.accent}08,transparent 70%)`, pointerEvents: 'none' }} />
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 10 }}>
+                {c.label}
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 'clamp(18px,2.5vw,26px)', letterSpacing: '-0.02em', color: c.accent }}>
+                {c.val}
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, color: 'rgba(255,255,255,0.18)', marginTop: 6, letterSpacing: '0.06em' }}>
+                {c.sub}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Quick actions */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))',gap:10,marginBottom:28}}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: 8, marginBottom: 28 }}>
         {[
-          {label:'Invest Now',icon:'◈',action:()=>router.push('/dashboard/invest'),primary:true},
-          {label:'Withdraw',icon:'↓',action:()=>router.push('/dashboard/withdraw')},
-          {label:'My Perks',icon:'★',action:()=>router.push('/dashboard/perks')},
-          {label:'Profile',icon:'◉',action:()=>router.push('/dashboard/profile')},
-        ].map((a,i)=>(
-          <button key={i} onClick={a.action} style={{padding:'16px 12px',background:a.primary?'rgba(0,212,255,0.1)':'rgba(255,255,255,0.02)',border:a.primary?'1px solid rgba(0,212,255,0.3)':'1px solid rgba(255,255,255,0.06)',color:a.primary?'#00D4FF':'rgba(255,255,255,0.5)',fontFamily:"'Courier New',monospace",cursor:'pointer',textAlign:'center',transition:'all 0.2s',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-            <span style={{fontSize:18}}>{a.icon}</span>
-            <span style={{fontSize:8,letterSpacing:'0.25em',textTransform:'uppercase'}}>{a.label}</span>
+          { label: 'Invest Now', icon: '◈', path: '/dashboard/invest', primary: true },
+          { label: 'Withdraw', icon: '↓', path: '/dashboard/withdraw' },
+          { label: 'Store', icon: '◇', path: '/dashboard/store' },
+          { label: 'My Perks', icon: '★', path: '/dashboard/perks' },
+        ].map((a, i) => (
+          <button key={i} onClick={() => router.push(a.path)} style={{
+            padding: '18px 12px',
+            background: a.primary ? 'rgba(192,192,192,0.08)' : 'rgba(255,255,255,0.02)',
+            border: a.primary ? '1px solid rgba(192,192,192,0.25)' : '1px solid rgba(255,255,255,0.06)',
+            color: a.primary ? '#C0C0C0' : 'rgba(255,255,255,0.4)',
+            fontFamily: "'Courier New',monospace",
+            cursor: 'pointer', textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            transition: 'all 0.2s',
+          }}>
+            <span style={{ fontSize: 20 }}>{a.icon}</span>
+            <span style={{ fontSize: 7, letterSpacing: '0.28em', textTransform: 'uppercase' }}>{a.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Active investments */}
-      <div style={{marginBottom:28}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-          <div style={{fontSize:8,letterSpacing:'0.42em',color:'rgba(255,255,255,0.3)',textTransform:'uppercase'}}>Active Missions</div>
-          <button onClick={()=>router.push('/dashboard/invest')} style={{fontSize:8,letterSpacing:'0.25em',color:'rgba(0,212,255,0.5)',background:'none',border:'none',cursor:'pointer',textTransform:'uppercase',fontFamily:'inherit'}}>+ New Investment</button>
+      {/* Active missions */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.42em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>
+            Active Missions
+          </div>
+          <button onClick={() => router.push('/dashboard/invest')} style={{
+            fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.28em',
+            color: 'rgba(192,192,192,0.5)', background: 'none', border: 'none',
+            cursor: 'pointer', textTransform: 'uppercase',
+          }}>
+            + New Investment
+          </button>
         </div>
-        {activeInv.length===0?(
-          <div style={{border:'1px solid rgba(255,255,255,0.04)',padding:'40px 20px',textAlign:'center'}}>
-            <div style={{fontSize:32,marginBottom:12,opacity:0.3}}>🚀</div>
-            <div style={{fontSize:10,color:'rgba(255,255,255,0.2)',letterSpacing:'0.08em',marginBottom:20,lineHeight:1.9}}>No active missions. Start your first investment to begin earning weekly returns.</div>
-            <button onClick={()=>router.push('/dashboard/invest')} style={{background:'#fff',color:'#000',border:'none',padding:'10px 24px',fontFamily:"'Courier New',monospace",fontSize:9,letterSpacing:'0.3em',cursor:'pointer',fontWeight:700,textTransform:'uppercase'}}>View Plans →</button>
+
+        {activeInv.length === 0 ? (
+          <div style={{ border: '1px solid rgba(255,255,255,0.05)', padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 16, opacity: 0.2 }}>🚀</div>
+            <div style={{ fontFamily: "'Courier New',monospace", fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.1em', lineHeight: 2, marginBottom: 24 }}>
+              No active missions.<br />Start your first investment to begin earning weekly returns.
+            </div>
+            <button onClick={() => router.push('/dashboard/invest')} style={{
+              background: '#fff', color: '#000', border: 'none',
+              padding: '11px 28px', fontFamily: "'Courier New',monospace",
+              fontSize: 9, letterSpacing: '0.35em', cursor: 'pointer',
+              fontWeight: 700, textTransform: 'uppercase',
+            }}>
+              View Plans →
+            </button>
           </div>
-        ):activeInv.map(inv=>(
-          <div key={inv.id} style={{background:'rgba(0,212,255,0.02)',border:'1px solid rgba(0,212,255,0.1)',padding:'16px 18px',marginBottom:8,display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
-            <ProgressArc pct={planProgress(inv)} size={52}/>
-            <div style={{flex:1,minWidth:120}}>
-              <div style={{fontSize:13,marginBottom:4}}>{inv.investment_plans?.name} <span style={{fontSize:8,color:'rgba(0,212,255,0.5)',letterSpacing:'0.2em',textTransform:'uppercase'}}>· Active</span></div>
-              <div style={{fontSize:8,color:'rgba(255,255,255,0.25)',letterSpacing:'0.08em'}}>${inv.amount.toLocaleString()} · {daysLeft(inv)} days remaining</div>
-              <div style={{marginTop:8,height:2,background:'rgba(255,255,255,0.05)',overflow:'hidden'}}>
-                <div style={{height:'100%',width:`${planProgress(inv)}%`,background:'linear-gradient(90deg,rgba(0,212,255,0.4),#00D4FF)',transition:'width 1s ease'}}/>
+        ) : (
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+            {activeInv.map((inv, i) => (
+              <div key={inv.id} style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '18px 20px', flexWrap: 'wrap',
+                borderBottom: i < activeInv.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+              }}>
+                <ProgressArc pct={planProgress(inv)} size={48} />
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <div style={{ fontFamily: "'Courier New',monospace", fontSize: 12, color: '#fff', letterSpacing: '0.06em' }}>
+                      {inv.investment_plans?.name}
+                    </div>
+                    <span style={{
+                      fontFamily: "'Courier New',monospace", fontSize: 7,
+                      letterSpacing: '0.25em', textTransform: 'uppercase',
+                      padding: '2px 8px', background: 'rgba(192,192,192,0.08)',
+                      color: 'rgba(192,192,192,0.6)', border: '1px solid rgba(192,192,192,0.15)',
+                    }}>
+                      Active
+                    </span>
+                  </div>
+                  <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    ${inv.amount.toLocaleString()} invested · {daysLeft(inv)} days remaining
+                  </div>
+                  <div style={{ height: 2, background: 'rgba(255,255,255,0.05)' }}>
+                    <div style={{ height: '100%', width: `${planProgress(inv)}%`, background: 'linear-gradient(90deg,rgba(192,192,192,0.3),#C0C0C0)', transition: 'width 1s ease' }} />
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 4 }}>
+                    Weekly Return
+                  </div>
+                  <div style={{ fontFamily: "'Courier New',monospace", fontSize: 20, letterSpacing: '-0.02em', color: '#C0C0C0' }}>
+                    ${inv.weekly_return.toLocaleString()}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style={{textAlign:'right'}}>
-              <div style={{fontSize:7,letterSpacing:'0.3em',color:'rgba(255,255,255,0.2)',textTransform:'uppercase',marginBottom:4}}>Weekly</div>
-              <div style={{fontSize:18,color:'#00D4FF'}}>${inv.weekly_return.toLocaleString()}</div>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Mission feed */}
-      <div style={{border:'1px solid rgba(255,255,255,0.04)',padding:'18px 18px'}}>
-        <div style={{fontSize:8,letterSpacing:'0.42em',color:'rgba(255,255,255,0.25)',textTransform:'uppercase',marginBottom:16}}>Mission Feed</div>
-        {[
-          {icon:'🚀',text:'Falcon 9 · Starlink Group 15-4 · Launch Successful',time:'2h ago',color:'rgba(0,212,255,0.6)'},
-          {icon:'📡',text:`SPCE live at $${spce.toFixed(2)} — +${((spce-120)/120*100).toFixed(2)}% since IPO`,time:'Now',color:'rgba(255,255,255,0.5)'},
-          {icon:'🛸',text:'Starship Flight 9 · Orbital Test · Scheduled',time:'2d away',color:'rgba(255,200,0,0.5)'},
-          {icon:'💰',text:'Weekly returns processed for all active plans',time:'3d ago',color:'rgba(0,212,255,0.4)'},
-        ].map((f,i)=>(
-          <div key={i} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 0',borderBottom:i<3?'1px solid rgba(255,255,255,0.03)':'none'}}>
-            <span style={{fontSize:14,flexShrink:0}}>{f.icon}</span>
-            <div style={{flex:1,fontSize:10,color:f.color,letterSpacing:'0.04em',lineHeight:1.7}}>{f.text}</div>
-            <div style={{fontSize:7,letterSpacing:'0.15em',color:'rgba(255,255,255,0.2)',whiteSpace:'nowrap'}}>{f.time}</div>
-          </div>
-        ))}
+      <div>
+        <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.42em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 16 }}>
+          Mission Feed
+        </div>
+        <div style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+          {[
+            { icon: '🚀', text: 'Falcon 9 · Starlink Group 15-4 · Launch Successful', time: '2h ago', color: 'rgba(192,192,192,0.6)' },
+            { icon: '📡', text: `SPCX live at $${spce.toFixed(2)} — ${ipoUp ? '+' : ''}${ipoChangePct}% since IPO`, time: 'Now', color: 'rgba(255,255,255,0.45)' },
+            { icon: '🛸', text: 'Starship Flight 9 · Orbital Test · Scheduled', time: '2d away', color: 'rgba(255,200,0,0.5)' },
+            { icon: '💰', text: 'Weekly returns processed for all active plans', time: '3d ago', color: 'rgba(192,192,192,0.4)' },
+          ].map((f, i, arr) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 14,
+              padding: '14px 20px',
+              borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+            }}>
+              <span style={{ fontSize: 14, flexShrink: 0, opacity: 0.7 }}>{f.icon}</span>
+              <div style={{ flex: 1, fontFamily: "'Courier New',monospace", fontSize: 10, color: f.color, letterSpacing: '0.04em', lineHeight: 1.8 }}>
+                {f.text}
+              </div>
+              <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                {f.time}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

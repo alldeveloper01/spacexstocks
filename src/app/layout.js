@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import ChatWidget from '@/components/ChatWidget'
 
 export const metadata = {
   title: 'SpaceX Stocks — Private Investment Access',
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
       </head>
       <body style={{ margin: 0, padding: 0, background: '#000', color: '#fff', fontFamily: "'Courier New', monospace" }}>
         {children}
+        <ChatWidget />
       </body>
     </html>
   )

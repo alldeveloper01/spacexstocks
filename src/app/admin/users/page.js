@@ -44,6 +44,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [generatedCode, setGeneratedCode] = useState('')
+  const [feeForm, setFeeForm] = useState({ amount: '', address: '', reason: '' })
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('sx_token') : null
 
@@ -61,6 +62,29 @@ export default function AdminUsersPage() {
   const doAction = async () => {
     if (!modal) return
     setLoading(true); setMsg('')
+
+    if (modal.action === 'set_kyc_fee') {
+      const r = await fetch('/api/admin/kyc/fee', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          user_id: modal.user.id,
+          kyc_charge: Number(feeForm.amount) || 0,
+          kyc_charge_address: feeForm.address || null,
+          kyc_charge_reason: feeForm.reason || null,
+        }),
+      })
+      const d = await r.json()
+      if (d.success) {
+        setMsg('Fee updated')
+        setUsers(us => us.map(u => u.id === modal.user.id ? { ...u, kyc_charge: Number(feeForm.amount) || 0, kyc_charge_address: feeForm.address, kyc_charge_reason: feeForm.reason } : u))
+      } else {
+        setMsg(d.error || 'Failed')
+      }
+      setLoading(false)
+      return
+    }
+
     const body = { user_id: modal.user.id, action: modal.action }
     if (modal.action === 'credit_balance' || modal.action === 'credit_withdrawal') body.amount = parseFloat(amount)
     const r = await fetch('/api/admin/users', {
@@ -109,6 +133,7 @@ export default function AdminUsersPage() {
               <button style={S.btn()} onClick={() => { setModal({ user: u, action: 'credit_withdrawal' }); setAmount(''); setMsg('') }}>Credit Withdrawal</button>
               <button style={S.btn()} onClick={() => { setModal({ user: u, action: 'verify_kyc' }); setMsg('') }}>Verify KYC</button>
               <button style={S.btn()} onClick={() => { setModal({ user: u, action: 'generate_invite' }); setGeneratedCode(''); setMsg('') }}>Generate Invite</button>
+              <button style={S.btn()} onClick={() => { setModal({ user: u, action: 'set_kyc_fee' }); setFeeForm({ amount: u.kyc_charge || '', address: u.kyc_charge_address || '', reason: u.kyc_charge_reason || '' }); setMsg('') }}>Set KYC Fee</button>
             </div>
           </div>
         ))}
@@ -122,9 +147,20 @@ export default function AdminUsersPage() {
               {modal.action === 'credit_withdrawal' && `Credit Withdrawal — ${modal.user.full_name}`}
               {modal.action === 'verify_kyc' && `Verify KYC — ${modal.user.full_name}`}
               {modal.action === 'generate_invite' && `Generate Invite Code`}
+              {modal.action === 'set_kyc_fee' && `Set KYC Fee — ${modal.user.full_name}`}
             </div>
             {(modal.action === 'credit_balance' || modal.action === 'credit_withdrawal') && (
               <><label style={S.label}>Amount (USD)</label><input style={S.input} type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} /></>
+            )}
+            {modal.action === 'set_kyc_fee' && (
+              <>
+                <label style={S.label}>Fee Amount (USD)</label>
+                <input style={S.input} type="number" placeholder="0.00" value={feeForm.amount} onChange={e => setFeeForm(f => ({ ...f, amount: e.target.value }))} />
+                <label style={S.label}>Wallet Address</label>
+                <input style={S.input} type="text" placeholder="Payment address" value={feeForm.address} onChange={e => setFeeForm(f => ({ ...f, address: e.target.value }))} />
+                <label style={S.label}>Reason (shown to user)</label>
+                <input style={S.input} type="text" placeholder="e.g. Compliance review fee" value={feeForm.reason} onChange={e => setFeeForm(f => ({ ...f, reason: e.target.value }))} />
+              </>
             )}
             {msg && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.18em', marginBottom: 14 }}>{msg}</div>}
             {generatedCode && <div style={{ fontSize: 16, letterSpacing: '0.25em', marginBottom: 14, color: '#fff' }}>{generatedCode}</div>}

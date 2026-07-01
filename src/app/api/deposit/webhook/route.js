@@ -1,86 +1,114 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendEmail } from '@/lib/email'
-import { pushover } from '@/lib/pushover'
 import crypto from 'crypto'
 
-export async function POST(request) {
-  try {
-    const body = await request.text()
-    const data = JSON.parse(body)
+export async function GET() {
+  return new Response('ok', { status: 200 })
+}
 
-    // Verify HMAC — header is uppercase SHA512 from Meridian fix
-    const hmacHeader = request.headers.get('hmac') || request.headers.get('HMAC')
-    if (process.env.OXAPAY_API_KEY && hmacHeader) {
-      const expected = crypto
-        .createHmac('sha512', process.env.OXAPAY_API_KEY)
-        .update(body)
+export async function POST(req) {
+  try {
+    const rawBody = await req.text()
+    const hmacHeader = req.headers.get('hmac')
+
+    if (hmacHeader && process.env.OXAPAY_MERCHANT_KEY) {
+      const calculatedHmac = crypto
+        .createHmac('sha512', process.env.OXAPAY_MERCHANT_KEY)
+        .update(rawBody)
         .digest('hex')
-      if (expected !== hmacHeader) {
-        console.error('HMAC mismatch')
-        return new Response('ok', { status: 200 })
+      if (calculatedHmac !== hmacHeader) {
+        console.error('Invalid HMAC signature')
+        return new Response('Invalid signature', { status: 401 })
       }
     }
 
-    // Critical fix from Meridian: status is "Paid" with capital P
-    if (data.status !== 'Paid') {
+    const data = JSON.parse(rawBody)
+    console.log('OxaPay webhook received:', JSON.stringify(data))
+
+    const { status, order_id, track_id, txs } = data
+
+    if (status !== 'Paid') {
       return new Response('ok', { status: 200 })
     }
 
-    const order_id = data.order_id
-    if (!order_id) return new Response('ok', { status: 200 })
+    const actualAmount = txs?.[0]?.value || data.value || data.amount
+    const paidCurrency = txs?.[0]?.currency || data.currency
 
-    // Find deposit by order_id
-    const { data: deposit } = await supabaseAdmin
-      .from('deposits')
-      .select('*, users(*)')
-      .eq('order_id', order_id)
-      .single()
+    let deposit = null
 
-    if (!deposit || deposit.status === 'completed') {
+    if (order_id) {
+      const { data: found } = await supabaseAdmin
+        .from('deposits')
+        .select('*, users(*)')
+        .eq('order_id', String(order_id))
+        .maybeSingle()
+      if (found) deposit = found
+    }
+
+    if (!deposit && track_id) {
+      const { data: found } = await supabaseAdmin
+        .from('deposits')
+        .select('*, users(*)')
+        .eq('oxapay_track_id', String(track_id))
+        .maybeSingle()
+      if (found) deposit = found
+    }
+
+    if (!deposit) {
+      console.error('Deposit not found for order_id:', order_id)
       return new Response('ok', { status: 200 })
     }
 
-    // Use txs[0].value for actual amount received — from Meridian fix
-    const paidAmount = data.txs?.[0]?.value
-      ? parseFloat(data.txs[0].value)
-      : deposit.amount
+    if (deposit.status === 'completed') {
+      return new Response('ok', { status: 200 })
+    }
 
-    // Update deposit
+    const creditAmount = Number(actualAmount) || Number(deposit.amount)
+
     await supabaseAdmin
       .from('deposits')
       .update({
         status: 'completed',
-        oxapay_track_id: data.track_id || deposit.oxapay_track_id,
+        amount: creditAmount,
+        oxapay_track_id: String(track_id || '')
       })
       .eq('id', deposit.id)
 
-    // Credit user balance
-    const user = deposit.users
+    const { data: freshUser } = await supabaseAdmin
+      .from('users')
+      .select('balance, total_deposited, full_name')
+      .eq('id', deposit.user_id)
+      .single()
+
     await supabaseAdmin
       .from('users')
-      .update({ balance: (user.balance || 0) + paidAmount })
-      .eq('id', user.id)
+      .update({
+        balance: (freshUser?.balance || 0) + creditAmount,
+        total_deposited: (freshUser?.total_deposited || 0) + creditAmount
+      })
+      .eq('id', deposit.user_id)
 
-    // Email confirmation
-    await sendEmail({
-      to: user.email,
-      subject: 'Deposit Confirmed',
-      title: 'Your Deposit Has Been Received.',
-      body: `Hello ${user.full_name},<br><br>
-Your deposit of <strong>$${paidAmount.toLocaleString()}</strong> has been confirmed and credited to your account.<br><br>
-Your balance is now ready. You can invest in a plan from your dashboard.<br><br>
-Questions? Contact us at invest@spacestocks.finance`,
-      from: 'noreply@spacestocks.finance',
-    })
+    // Pushover notification
+    if (process.env.PUSHOVER_APP_TOKEN && process.env.PUSHOVER_USER_KEY) {
+      await fetch('https://api.pushover.net/1/messages.json', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: process.env.PUSHOVER_APP_TOKEN,
+          user: process.env.PUSHOVER_USER_KEY,
+          title: '💰 New SpaceX Stocks Deposit',
+          message: `$${creditAmount} deposit confirmed for ${freshUser?.full_name} via ${paidCurrency || deposit.currency?.toUpperCase()}`,
+          priority: 1,
+          sound: 'cashregister'
+        })
+      })
+    }
 
-    await pushover('Deposit Confirmed', `${user.full_name} deposited $${paidAmount.toLocaleString()}`)
-
-    // Webhook must return "ok" string — from Meridian fix
+    console.log('Deposit credited:', deposit.id, 'Amount:', creditAmount)
     return new Response('ok', { status: 200 })
-  } catch (e) {
-    console.error('Webhook error:', e)
+
+  } catch (error) {
+    console.error('Webhook error:', error)
     return new Response('ok', { status: 200 })
   }
 }

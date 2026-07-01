@@ -14,8 +14,15 @@ export async function POST(request) {
   if (!amount || !wallet_address) {
     return NextResponse.json({ error: 'Amount and wallet address required' }, { status: 400 })
   }
-  if (amount < 20) {
-    return NextResponse.json({ error: 'Minimum withdrawal is $20' }, { status: 400 })
+  const { data: minWithdrawalSetting } = await supabaseAdmin
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'min_withdrawal')
+    .single()
+  const MIN_WITHDRAWAL = Number(minWithdrawalSetting?.value || 20)
+
+  if (amount < MIN_WITHDRAWAL) {
+    return NextResponse.json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL}` }, { status: 400 })
   }
   if (user.withdrawal_balance < amount) {
     return NextResponse.json({ error: 'Insufficient withdrawal balance' }, { status: 400 })

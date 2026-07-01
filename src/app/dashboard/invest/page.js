@@ -116,27 +116,27 @@ export default function InvestPage() {
               const hasPerks = (PLAN_PERKS[p.name] || []).length > 0
               return (
                 <div key={p.id} onClick={() => setSelected(p)} style={{
-                  background: isSel ? 'rgba(0,212,255,0.05)' : '#000',
-                  border: isSel ? '1px solid rgba(0,212,255,0.3)' : '1px solid rgba(255,255,255,0.05)',
-                  borderTop: `2px solid ${isSel ? '#00D4FF' : 'rgba(255,255,255,0.1)'}`,
+                  background: isSel ? 'rgba(192,192,192,0.05)' : '#000',
+                  border: isSel ? '1px solid rgba(192,192,192,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                  borderTop: `2px solid ${isSel ? '#C0C0C0' : 'rgba(255,255,255,0.1)'}`,
                   padding: '22px 20px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                 }}>
                   {hasPerks && (
-                    <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(0,212,255,0.6)', textTransform: 'uppercase', background: 'rgba(0,212,255,0.08)', padding: '2px 8px', border: '1px solid rgba(0,212,255,0.15)' }}>Perks</div>
+                    <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(192,192,192,0.6)', textTransform: 'uppercase', background: 'rgba(192,192,192,0.08)', padding: '2px 8px', border: '1px solid rgba(192,192,192,0.15)' }}>Perks</div>
                   )}
-                  <div style={{ fontSize: 8, letterSpacing: '0.45em', color: isSel ? 'rgba(0,212,255,0.7)' : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 12 }}>{p.name}</div>
+                  <div style={{ fontSize: 8, letterSpacing: '0.45em', color: isSel ? 'rgba(192,192,192,0.7)' : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 12 }}>{p.name}</div>
                   <div style={{ fontSize: 28, letterSpacing: '-0.02em', marginBottom: 6 }}>${p.min_amount.toLocaleString()} <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>min</span></div>
-                  <div style={{ fontSize: 11, color: isSel ? 'rgba(0,212,255,0.8)' : 'rgba(255,255,255,0.45)', letterSpacing: '0.06em', marginBottom: 4 }}>${p.weekly_return.toLocaleString()} per week</div>
+                  <div style={{ fontSize: 11, color: isSel ? 'rgba(192,192,192,0.8)' : 'rgba(255,255,255,0.45)', letterSpacing: '0.06em', marginBottom: 4 }}>${p.weekly_return.toLocaleString()} per week</div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', marginBottom: 14 }}>{p.duration_days} days</div>
                   <div style={{ paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                    Total return: <span style={{ color: isSel ? '#00D4FF' : 'rgba(255,255,255,0.7)', fontWeight: 600 }}>${p.target_profit.toLocaleString()}</span>
+                    Total return: <span style={{ color: isSel ? '#C0C0C0' : 'rgba(255,255,255,0.7)', fontWeight: 600 }}>${p.target_profit.toLocaleString()}</span>
                   </div>
                   {hasPerks && (
                     <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {(PLAN_PERKS[p.name] || []).slice(0, 3).map((perk, i) => (
                         <span key={i} style={{ fontSize: 7, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 7px' }}>{getPerkIcon(perk)} {perk.split(' ').slice(0, 3).join(' ')}</span>
                       ))}
-                      {(PLAN_PERKS[p.name] || []).length > 3 && <span style={{ fontSize: 7, color: 'rgba(0,212,255,0.4)', padding: '2px 4px' }}>+{(PLAN_PERKS[p.name] || []).length - 3} more</span>}
+                      {(PLAN_PERKS[p.name] || []).length > 3 && <span style={{ fontSize: 7, color: 'rgba(192,192,192,0.4)', padding: '2px 4px' }}>+{(PLAN_PERKS[p.name] || []).length - 3} more</span>}
                     </div>
                   )}
                 </div>
@@ -145,8 +145,8 @@ export default function InvestPage() {
           </div>
 
           {selected && (
-            <div style={{ background: 'rgba(0,212,255,0.03)', border: '1px solid rgba(0,212,255,0.12)', padding: '20px 22px', marginBottom: 20 }}>
-              <div style={{ fontSize: 8, letterSpacing: '0.38em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 14 }}>Selected: {selected.name}</div>
+            <div style={{ background: 'rgba(192,192,192,0.03)', border: '1px solid rgba(192,192,192,0.12)', padding: '20px 22px', marginBottom: 20 }}>
+              <div style={{ fontSize: 8, letterSpacing: '0.38em', color: 'rgba(192,192,192,0.5)', textTransform: 'uppercase', marginBottom: 14 }}>Selected: {selected.name}</div>
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: perks.length > 0 ? 16 : 0 }}>
                 {[
                   { label: 'Min Deposit', val: `$${selected.min_amount.toLocaleString()}` },
@@ -156,7 +156,7 @@ export default function InvestPage() {
                 ].map((s, i) => (
                   <div key={i}>
                     <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontSize: 16, color: '#00D4FF' }}>{s.val}</div>
+                    <div style={{ fontSize: 16, color: '#C0C0C0' }}>{s.val}</div>
                   </div>
                 ))}
               </div>
@@ -165,7 +165,7 @@ export default function InvestPage() {
                   <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 10 }}>Included Perks</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {perks.map((p, i) => (
-                      <div key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', padding: '4px 10px', border: '1px solid rgba(0,212,255,0.12)', background: 'rgba(0,212,255,0.03)', letterSpacing: '0.04em' }}>
+                      <div key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', padding: '4px 10px', border: '1px solid rgba(192,192,192,0.12)', background: 'rgba(192,192,192,0.03)', letterSpacing: '0.04em' }}>
                         {getPerkIcon(p)} {p}
                       </div>
                     ))}
@@ -191,11 +191,11 @@ export default function InvestPage() {
             <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>Enter amount · Deposit crypto · Start earning</div>
           </div>
 
-          <div style={{ maxWidth: 460, background: 'rgba(0,212,255,0.02)', border: '1px solid rgba(0,212,255,0.1)', padding: 28 }}>
+          <div style={{ maxWidth: 460, background: 'rgba(192,192,192,0.02)', border: '1px solid rgba(192,192,192,0.1)', padding: 28 }}>
             {user && user.balance >= selected.min_amount ? (
               <>
                 <div style={{ fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', lineHeight: 1.9, marginBottom: 20, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  Your balance: <span style={{ color: '#00D4FF' }}>${(user.balance || 0).toLocaleString()}</span> — ready to invest
+                  Your balance: <span style={{ color: '#C0C0C0' }}>${(user.balance || 0).toLocaleString()}</span> — ready to invest
                 </div>
                 <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Investment Amount (USD)</label>
                 <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={`Min $${selected.min_amount.toLocaleString()}`}
@@ -213,7 +213,7 @@ export default function InvestPage() {
             ) : (
               <>
                 <div style={{ fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)', lineHeight: 1.9, marginBottom: 20, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  Deposit funds first. Min for {selected.name}: <span style={{ color: '#00D4FF' }}>${selected.min_amount.toLocaleString()}</span>
+                  Deposit funds first. Min for {selected.name}: <span style={{ color: '#C0C0C0' }}>${selected.min_amount.toLocaleString()}</span>
                 </div>
                 <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Deposit Amount (USD)</label>
                 <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={`Min $${selected.min_amount}`}
@@ -226,7 +226,7 @@ export default function InvestPage() {
                 <label style={{ fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Select Cryptocurrency</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 18 }}>
                   {CURRENCIES.map(c => (
-                    <button key={c} onClick={() => setCurrency(c)} style={{ padding: '8px 4px', textAlign: 'center', fontSize: 9, letterSpacing: '0.15em', cursor: 'pointer', fontFamily: 'inherit', background: currency === c ? 'rgba(0,212,255,0.1)' : 'transparent', border: currency === c ? '1px solid rgba(0,212,255,0.35)' : '1px solid rgba(255,255,255,0.07)', color: currency === c ? '#00D4FF' : 'rgba(255,255,255,0.35)' }}>{c}</button>
+                    <button key={c} onClick={() => setCurrency(c)} style={{ padding: '8px 4px', textAlign: 'center', fontSize: 9, letterSpacing: '0.15em', cursor: 'pointer', fontFamily: 'inherit', background: currency === c ? 'rgba(192,192,192,0.1)' : 'transparent', border: currency === c ? '1px solid rgba(192,192,192,0.35)' : '1px solid rgba(255,255,255,0.07)', color: currency === c ? '#C0C0C0' : 'rgba(255,255,255,0.35)' }}>{c}</button>
                   ))}
                 </div>
                 {(currency === 'ETH' || currency === 'BNB') && (
@@ -246,15 +246,15 @@ export default function InvestPage() {
         <div style={{ maxWidth: 460 }}>
           <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 400, marginBottom: 4 }}>Send Payment</div>
           <div style={{ fontSize: 8, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', marginBottom: 28 }}>Send exact amount · Do not close this page</div>
-          <div style={{ background: 'rgba(0,212,255,0.02)', border: '1px solid rgba(0,212,255,0.1)', padding: 24 }}>
-            <div style={{ fontSize: 7, letterSpacing: '0.35em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>Send Exactly</div>
-            <div style={{ fontSize: 28, letterSpacing: '-0.02em', marginBottom: 20, color: '#00D4FF' }}>${depositData.amount} {depositData.currency}</div>
+          <div style={{ background: 'rgba(192,192,192,0.02)', border: '1px solid rgba(192,192,192,0.1)', padding: 24 }}>
+            <div style={{ fontSize: 7, letterSpacing: '0.35em', color: 'rgba(192,192,192,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>Send Exactly</div>
+            <div style={{ fontSize: 28, letterSpacing: '-0.02em', marginBottom: 20, color: '#C0C0C0' }}>${depositData.amount} {depositData.currency}</div>
             <div style={{ fontSize: 7, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 8 }}>To This Address (tap to copy)</div>
             <div onClick={() => { navigator.clipboard.writeText(depositData.address); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 14px', wordBreak: 'break-all', fontSize: 11, letterSpacing: '0.04em', marginBottom: 8, cursor: 'pointer', lineHeight: 1.6 }}>
               {depositData.address}
             </div>
-            {copied && <div style={{ fontSize: 8, letterSpacing: '0.25em', color: 'rgba(0,212,255,0.6)', marginBottom: 10 }}>COPIED ✓</div>}
+            {copied && <div style={{ fontSize: 8, letterSpacing: '0.25em', color: 'rgba(192,192,192,0.6)', marginBottom: 10 }}>COPIED ✓</div>}
             {depositData.trust_wallet_warning && (
               <div style={{ fontSize: 9, color: 'rgba(255,160,0,0.6)', padding: '10px 12px', border: '1px solid rgba(255,160,0,0.12)', marginBottom: 14, lineHeight: 1.8 }}>
                 If Trust Wallet shows a "high risk" warning, this is a false positive from OxaPay. The address is safe.
@@ -270,7 +270,7 @@ export default function InvestPage() {
       {step === 'success' && (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: 48, marginBottom: 20 }}>🚀</div>
-          <div style={{ fontSize: 8, letterSpacing: '0.5em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>Mission Confirmed</div>
+          <div style={{ fontSize: 8, letterSpacing: '0.5em', color: 'rgba(192,192,192,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>Mission Confirmed</div>
           <div style={{ fontSize: 'clamp(24px,4vw,40px)', fontWeight: 400, marginBottom: 12 }}>You're in.</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em', lineHeight: 2, maxWidth: 380, margin: '0 auto 32px' }}>
             {selected ? `Your ${selected.name} plan is now active. Your first weekly return will be paid within 7 days.` : 'Your deposit has been confirmed and credited to your account.'}
