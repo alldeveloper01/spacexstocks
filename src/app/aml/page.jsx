@@ -48,7 +48,7 @@ export default function AMLPage() {
 
       <nav className="nav">
         <Link href="/" className="nav-logo">SpaceX Stocks<span>spacestocks.finance</span></Link>
-        <Link href="/" className="nav-back">← Back to Home</Link>
+        <a href="/" className="nav-back">← Back to Home</a>
       </nav>
 
       <div className="hero">
