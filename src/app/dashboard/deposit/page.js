@@ -57,7 +57,7 @@ export default function DepositPage() {
   const MIN = minDeposit
 
   useEffect(() => {
-    fetch('/api/admin/settings', { headers: authHeaders() })
+    fetch('/api/public/settings')
       .then(r => r.json())
       .then(d => {
         const min = d.settings?.find(s => s.key === 'min_deposit')
