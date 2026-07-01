@@ -78,18 +78,19 @@ const S = `
   .timeline-item:nth-child(5){animation-delay:.5s}
 
   @media(max-width:900px){
-    .nav{padding:14px 20px}
-    .hero{padding:60px 20px 48px}
-    .stats{margin:48px 20px 0;grid-template-columns:1fr}
-    .section{padding:52px 20px}
-    .story-grid{grid-template-columns:1fr;gap:0}
-    .values-inner{padding:52px 20px}
-    .values-grid{grid-template-columns:1fr}
-    .cta-block{margin:0 20px 60px;padding:40px 20px}
-    .footer{padding:24px 20px}
-    .timeline-item{gap:16px}
-    .tl-year{width:60px;font-size:22px}
-  }
+  .nav{padding:14px 20px}
+  .hero{padding:60px 20px 48px;max-width:100%}
+  .section{padding:52px 20px}
+  .story-grid{grid-template-columns:1fr;gap:0}
+  .values-inner{padding:52px 20px}
+  .values-grid{grid-template-columns:1fr}
+  .cta-block{margin:0 20px 60px;padding:40px 20px}
+  .footer{padding:24px 20px}
+  .timeline-item{gap:16px}
+  .tl-year{width:60px;font-size:22px}
+  .stats-outer{padding:0 20px!important}
+  .stats-grid{grid-template-columns:1fr!important}
+}
 `
 
 export default function AboutPage() {
@@ -112,7 +113,7 @@ export default function AboutPage() {
       </div>
 
       <div className="stats" style={{ margin: '80px auto 0', padding: '0 60px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(255,255,255,.05)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(255,255,255,.05)' }} className="stats-grid">
           {[
             { n: '$2.4B+', l: 'Under Management' },
             { n: '4,200+', l: 'Active Members' },

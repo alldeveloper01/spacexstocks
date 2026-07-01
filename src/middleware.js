@@ -4,13 +4,6 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl
   const ua = request.headers.get('user-agent') || ''
 
-  // Mobile redirect
-  if (pathname === '/') {
-    const isMobile = /iPhone|Android|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
-    if (isMobile) {
-      return NextResponse.redirect(new URL('/mobile', request.url))
-    }
-  }
 
   if (process.env.NODE_ENV !== 'production') return NextResponse.next()
 
