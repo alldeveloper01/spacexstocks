@@ -77,8 +77,8 @@ const MIN = Number(minDepositSetting?.value || 50)
             currency: 'USD',
             order_id: orderId,
             fee_paid_by_payer: 1,
-            callback_url: 'https://spacestocks.finance/api/deposit/webhook',
-            return_url: 'https://spacestocks.finance/dashboard/deposit?status=success',
+            callback_url: 'https://www.spacestocks.finance/api/deposit/webhook',
+            return_url: 'https://www.spacestocks.finance/dashboard/deposit?status=success',
             email: user.email,
             description: `SpaceX Stocks deposit for ${user.email}`,
             lifetime: 60
