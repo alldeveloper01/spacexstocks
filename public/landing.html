@@ -160,10 +160,12 @@ canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   .r-info{display:none}
   .gt-stats{gap:20px}
   .gt-stat-n{font-size:18px}
-  .nav-btn{font-size:8px;padding:7px 12px;letter-spacing:.18em}
-  #nav{padding:14px 16px}
   .gt-h{font-size:clamp(24px,8vw,52px)}
   .cta-h{font-size:clamp(36px,12vw,80px)}
+  #nav{padding:10px 16px;flex-wrap:wrap;gap:8px}
+  .nav-right{flex-wrap:wrap;gap:8px;justify-content:flex-end}
+  .nav-btn{font-size:7px;padding:6px 10px;letter-spacing:.15em}
+  #nav a[href="/login"]{font-size:7px!important;padding:6px 10px!important;letter-spacing:.15em!important}
 }
 #cta{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;padding:0 28px}
 .cta-ey{font-size:8px;letter-spacing:.58em;color:rgba(255,255,255,.14);margin-bottom:16px;text-transform:uppercase}
@@ -567,8 +569,9 @@ try {
   function mkPin(lat,lon){var m=new THREE.Mesh(new THREE.SphereGeometry(.82,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));m.userData={lat:lat,lon:lon};var pm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.42,side:THREE.DoubleSide});var pr=new THREE.Mesh(new THREE.RingGeometry(1.1,1.8,24),pm);pr.userData.pm=pm;scene.add(m,pr);return{p:m,pr:pr};}
   var HW=mkPin(33.9,-118.3),CC=mkPin(28.4,-80.6);
   scene.add(new THREE.AmbientLight(0xffffff,0.1));
-  var sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(320,80,180);scene.add(sun);
-  var fill=new THREE.DirectionalLight(0x223344,0.3);fill.position.set(-200,-60,-100);scene.add(fill);
+  var sun=new THREE.DirectionalLight(0xffffff,window.innerWidth<600?4.5:2.2);sun.position.set(320,80,180);scene.add(sun);
+  var fill=new THREE.DirectionalLight(0x334455,window.innerWidth<600?1.2:0.3);fill.position.set(-200,-60,-100);scene.add(fill);
+  var fill2=new THREE.DirectionalLight(0xffffff,window.innerWidth<600?0.8:0);fill2.position.set(-320,-80,-180);scene.add(fill2);
   var ct={x:0,y:0,z:300},lkt={x:0,y:0,z:0},ert=0,ers=0.0006,mx=0,my=0,tm=0;
   function lerp(a,b,f){return a+(b-a)*f;}
   window.addEventListener('mousemove',function(e){mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2;});
