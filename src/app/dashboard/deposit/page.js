@@ -60,8 +60,7 @@ export default function DepositPage() {
     fetch('/api/public/settings')
       .then(r => r.json())
       .then(d => {
-        const min = d.settings?.find(s => s.key === 'min_deposit')
-        if (min) setMinDeposit(Number(min.value))
+        if (d.min_deposit) setMinDeposit(d.min_deposit)
       }).catch(() => {})
   }, [])
 
@@ -244,7 +243,7 @@ export default function DepositPage() {
           Make a Deposit
         </div>
         <div style={{ fontFamily: "'Courier New',monospace", fontSize: 8, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase' }}>
-          Fund your account · Minimum $50
+          Fund your account · Minimum ${MIN}
         </div>
       </div>
 

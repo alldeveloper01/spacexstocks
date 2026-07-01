@@ -41,10 +41,11 @@ export default function WithdrawPage() {
     if (!token) { router.push('/login'); return }
     fetch('/api/auth', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(setUser)
     fetch('/api/withdraw', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => setHistory(d.withdrawals || []))
-    fetch('/api/admin/settings', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => {
-      const min = d.settings?.find(s => s.key === 'min_withdrawal')
-      if (min) setMinWithdraw(Number(min.value))
-    }).catch(() => {})
+    fetch('/api/public/settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.min_withdrawal) setMinWithdraw(d.min_withdrawal)
+      }).catch(() => {})
   }, [])
 
   const handleWithdraw = async () => {
