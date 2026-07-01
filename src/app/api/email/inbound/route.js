@@ -3,7 +3,6 @@ export const fetchCache = 'force-no-store'
 export const revalidate = 0
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { resend } from '@/lib/email'
 
 export async function POST(request) {
   try {
@@ -19,7 +18,10 @@ export async function POST(request) {
     let bodyText = ''
     let bodyHtml = ''
     try {
-      const { data: fullEmail } = await resend.emails.receiving.get(email_id)
+      const emailRes = await fetch(`https://api.resend.com/emails/${email_id}`, {
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
+      })
+      const fullEmail = await emailRes.json()
       bodyText = fullEmail?.text || ''
       bodyHtml = fullEmail?.html || ''
     } catch (err) {
