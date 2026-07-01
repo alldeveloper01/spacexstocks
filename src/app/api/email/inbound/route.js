@@ -19,7 +19,9 @@ export async function POST(request) {
     let bodyHtml = ''
     try {
       const emailRes = await fetch(`https://api.resend.com/inbound/emails/${email_id}`, {
-  headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
+  method: 'POST',
+  headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({})
 })
 const fullEmail = await emailRes.json()
 console.log('Full email fetch result:', JSON.stringify(fullEmail))
