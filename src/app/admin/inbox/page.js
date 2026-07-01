@@ -115,7 +115,13 @@ export default function InboxPage() {
             <div style={S.eFrom}>From: {selected.from_address}</div>
             <div style={S.eSub}>{selected.subject}</div>
             <div style={S.eTo}>To: {selected.to_address} · {new Date(selected.received_at).toLocaleString()}</div>
-            <div style={S.eBody}>{selected.body_text || selected.body_html?.replace(/<[^>]+>/g, '') || '(no content)'}</div>
+            <div style={S.eBody}>
+            {selected.body_text 
+            ? selected.body_text 
+            : selected.body_html 
+            ? <div dangerouslySetInnerHTML={{ __html: selected.body_html }} />
+            : '(no content)'}
+            </div>
 
             {selected.attachments && selected.attachments.length > 0 && (
               <div style={{ marginBottom: 24 }}>
