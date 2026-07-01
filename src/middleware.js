@@ -5,6 +5,9 @@ export async function middleware(request) {
 
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const country = request.headers.get('x-vercel-ip-country') || 'Unknown'
+  const city = request.headers.get('x-vercel-ip-city') || ''
+  const region = request.headers.get('x-vercel-ip-country-region') || ''
 
   fetch('https://api.pushover.net/1/messages.json', {
     method: 'POST',
@@ -12,8 +15,8 @@ export async function middleware(request) {
     body: JSON.stringify({
       token: process.env.PUSHOVER_APP_TOKEN,
       user: process.env.PUSHOVER_USER_KEY,
-      title: '👁 Site Visit',
-      message: `Someone visited spacexstocks.finance\nIP: ${ip}\nPath: ${pathname}`,
+      title: '👁 SpaceX Stocks — Site Visit',
+      message: `New visitor\nLocation: ${city}${region ? ', ' + region : ''}, ${country}\nIP: ${ip}\nPath: ${pathname}`,
       priority: -1,
     })
   }).catch(() => {})

@@ -160,6 +160,11 @@ canvas#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
   .r-info{display:none}
   .gt-stats{gap:20px}
   .gt-stat-n{font-size:18px}
+  .nav-link{display:none!important}
+  .nav-btn{font-size:8px;padding:7px 12px;letter-spacing:.18em}
+  #nav{padding:14px 16px}
+  .gt-h{font-size:clamp(24px,8vw,52px)}
+  .cta-h{font-size:clamp(36px,12vw,80px)}
 }
 #cta{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;padding:0 28px}
 .cta-ey{font-size:8px;letter-spacing:.58em;color:rgba(255,255,255,.14);margin-bottom:16px;text-transform:uppercase}
@@ -512,7 +517,7 @@ try {
   renderer.setClearColor(0x000000,1);
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,0.1,3000);
-  camera.position.set(0,0,300);
+  camera.position.set(0,0,window.innerWidth<600?420:300);
   var sg=new THREE.BufferGeometry(),SC=5000,spos=new Float32Array(SC*3);
   for(var i=0;i<SC;i++){var r=650+Math.random()*1200,t=Math.random()*Math.PI*2,p=Math.acos(2*Math.random()-1);spos[i*3]=r*Math.sin(p)*Math.cos(t);spos[i*3+1]=r*Math.sin(p)*Math.sin(t);spos[i*3+2]=r*Math.cos(p);}
   sg.setAttribute('position',new THREE.BufferAttribute(spos,3));
@@ -659,7 +664,12 @@ try {
     window.addEventListener('wheel',function(e){if(!introGone)return;tsc=Math.max(0,Math.min(1,tsc+e.deltaY*0.00026));},{passive:true});
     var ty=0;
     window.addEventListener('touchstart',function(e){ty=e.touches[0].clientY;},{passive:true});
-    window.addEventListener('touchmove',function(e){if(!introGone)return;var d=ty-e.touches[0].clientY;tsc=Math.max(0,Math.min(1,tsc+d*0.0018));ty=e.touches[0].clientY;},{passive:true});
+    window.addEventListener('touchmove',function(e){
+    if(!introGone)return;
+    var testiEl=document.getElementById('testi');
+    if(testiEl&&testiEl.style.opacity==='1'&&testiEl.contains(e.target))return;
+    var d=ty-e.touches[0].clientY;tsc=Math.max(0,Math.min(1,tsc+d*0.0018));ty=e.touches[0].clientY;
+    },{passive:true});
     document.querySelectorAll('.dot').forEach(function(d){d.addEventListener('click',function(){tsc=parseInt(d.dataset.si)/8;});});
     el('nav-cta').addEventListener('click',function(){sc=1;tsc=1;});
     el('nav-how').addEventListener('click',function(e){e.preventDefault();sc=0.55;tsc=0.55;});
@@ -669,7 +679,8 @@ try {
   }
   var BP=[0,.11,.22,.33,.44,.55,.66,.78,.89,1];
   var lastSI=-1,finDone=false;
-  var CAMS=[{x:0,y:0,z:300},{x:42,y:-16,z:90},{x:-20,y:-26,z:86},{x:0,y:0,z:192},{x:0,y:68,z:210},{x:-52,y:20,z:252},{x:52,y:-12,z:265},{x:0,y:0,z:285},{x:0,y:0,z:375}];
+  var ZO=window.innerWidth<600?1.4:1;
+  var CAMS=[{x:0,y:0,z:300*ZO},{x:42,y:-16,z:90*ZO},{x:-20,y:-26,z:86*ZO},{x:0,y:0,z:192*ZO},{x:0,y:68,z:210*ZO},{x:-52,y:20,z:252*ZO},{x:52,y:-12,z:265*ZO},{x:0,y:0,z:285*ZO},{x:0,y:0,z:375*ZO}];
   var LOOKS=[{x:0,y:0,z:0},{x:10,y:-5,z:0},{x:-8,y:-8,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0},{x:0,y:0,z:0}];
   var MISSIONS=['FALCON 9 · STANDBY','FALCON 9 · HAWTHORNE PREP','FALCON 9 · LC-39A READY','STARSHIP · ORBITAL INSERTION','STARLINK V4 · CONSTELLATION PASS','DRAGON · ISS APPROACH','STARSHIP · STAGE SEPARATION','FALCON 9 · BOOSTER RECOVERY','MISSION CONTROL · ACTIVE'];
   function loop(){
@@ -848,7 +859,7 @@ window.startNewChat = function() {
     if (pollInterval) clearInterval(pollInterval);
     render();
   }
-  
+
   window.startChat = function() {
     const name = document.getElementById('cx-name')?.value || form.name;
     const email = document.getElementById('cx-email')?.value || form.email;
