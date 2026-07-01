@@ -24,6 +24,8 @@ const S = {
   btn: { background: '#fff', color: '#000', border: 'none', padding: '10px 24px', fontFamily: "'Courier New',monospace", fontSize: 9, letterSpacing: '0.28em', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase' },
   empty: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase' },
   unread: { width: 5, height: 5, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 6 },
+  attBtn: { display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '8px 14px', cursor: 'pointer', fontFamily: "'Courier New',monospace", marginRight: 8, marginBottom: 8 },
+  attLabel: { fontSize: 7, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 10, display: 'block' },
 }
 
 export default function InboxPage() {
@@ -40,6 +42,11 @@ export default function InboxPage() {
     if (!token) { router.push('/login'); return }
     fetch('/api/admin/inbox', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json()).then(d => setEmails(d.emails || []))
+    const interval = setInterval(() => {
+      fetch('/api/admin/inbox', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(d => setEmails(d.emails || []))
+    }, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const openEmail = async (email) => {
@@ -59,20 +66,37 @@ export default function InboxPage() {
   const sendReply = async () => {
     if (!reply.trim() || !selected) return
     setSending(true)
-    const r = await fetch('/api/admin/inbox', {
-      method: 'PUT',
+    const r = await fetch('/api/admin/inbox/reply', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email_id: selected.id, action: 'reply', body: reply }),
+      body: JSON.stringify({
+        to: selected.from_address,
+        subject: `Re: ${selected.subject}`,
+        body: reply,
+        email_id: selected.id
+      }),
     })
     const d = await r.json()
-    if (d.ok) { setMsg('✓ Reply sent'); setReply('') } else setMsg('Failed to send')
+    if (d.success) { setMsg('✓ Reply sent'); setReply('') } else setMsg('Failed to send')
     setSending(false)
   }
+
+  const openAttachment = async (att) => {
+    try {
+      const res = await fetch(`/api/admin/inbox/attachment?email_id=${selected.email_id}&attachment_id=${att.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.download_url) window.open(data.download_url, '_blank')
+    } catch {}
+  }
+
+  const unread = emails.filter(e => !e.read).length
 
   return (
     <div style={S.wrap}>
       <nav style={S.nav}>
-        <div style={S.logo}>SpaceX Stocks · Inbox</div>
+        <div style={S.logo}>SpaceX Stocks · Inbox {unread > 0 && `(${unread})`}</div>
         <button style={S.back} onClick={() => router.push('/admin')}>← Admin</button>
       </nav>
       <div style={S.layout}>
@@ -92,6 +116,22 @@ export default function InboxPage() {
             <div style={S.eSub}>{selected.subject}</div>
             <div style={S.eTo}>To: {selected.to_address} · {new Date(selected.received_at).toLocaleString()}</div>
             <div style={S.eBody}>{selected.body_text || selected.body_html?.replace(/<[^>]+>/g, '') || '(no content)'}</div>
+
+            {selected.attachments && selected.attachments.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <span style={S.attLabel}>📎 Attachments ({selected.attachments.length})</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                  {selected.attachments.map((att, i) => (
+                    <button key={i} style={S.attBtn} onClick={() => openAttachment(att)}>
+                      <span style={{ fontSize: 14 }}>{att.content_type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                      <span style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>{att.filename}</span>
+                      {att.size && <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>({Math.round(att.size / 1024)}KB)</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div style={S.divider}></div>
             <label style={S.label}>Reply</label>
             <textarea style={S.textarea} value={reply} onChange={e => setReply(e.target.value)} placeholder={`Reply to ${selected.from_address}...`} />

@@ -1,44 +1,64 @@
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { resend } from '@/lib/email'
-import { pushover } from '@/lib/pushover'
 
 export async function POST(request) {
   try {
-    const payload = await request.json()
-    const email_id = payload.email_id || payload.id
+    const payload = await request.text()
+    const body = JSON.parse(payload)
 
-    if (!email_id) return NextResponse.json({ ok: true })
+    if (body.type !== 'email.received') {
+      return NextResponse.json({ ok: true })
+    }
 
-    // Critical fix from Meridian: body not in webhook, must fetch separately
-    const emailData = await resend.emails.receiving.get(email_id)
+    const { email_id, from, subject, to, attachments: attachmentsMeta } = body.data
 
-    const from_address = emailData?.from || payload.from || ''
-    const to_address = emailData?.to?.[0] || payload.to?.[0] || ''
-    const subject = emailData?.subject || payload.subject || '(no subject)'
-    const body_html = emailData?.html || ''
-    const body_text = emailData?.text || ''
+    let bodyText = ''
+    let bodyHtml = ''
+    try {
+      const { data: fullEmail } = await resend.emails.receiving.get(email_id)
+      bodyText = fullEmail?.text || ''
+      bodyHtml = fullEmail?.html || ''
+    } catch (err) {
+      console.error('Failed to fetch email body:', err)
+    }
 
-    // Store attachment metadata only — not content
-    const attachments = (emailData?.attachments || []).map(a => ({
-      id: a.id,
-      filename: a.filename,
-      content_type: a.content_type,
-      size: a.size,
+    const attachments = (attachmentsMeta || []).map(att => ({
+      id: att.id,
+      filename: att.filename,
+      content_type: att.content_type,
+      size: att.size || null
     }))
 
     await supabaseAdmin.from('emails').insert({
       email_id,
-      from_address,
-      to_address,
-      subject,
-      body_html,
-      body_text,
-      attachments,
+      from_address: from,
+      to_address: Array.isArray(to) ? to[0] : to || '',
+      subject: subject || '(no subject)',
+      body_text: bodyText,
+      body_html: bodyHtml,
+      attachments: attachments.length > 0 ? attachments : null,
+      received_at: body.created_at || new Date().toISOString(),
+      read: false
     })
 
-    await pushover('New Email', `From: ${from_address} — ${subject}`)
+    if (process.env.PUSHOVER_APP_TOKEN && process.env.PUSHOVER_USER_KEY) {
+      await fetch('https://api.pushover.net/1/messages.json', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: process.env.PUSHOVER_APP_TOKEN,
+          user: process.env.PUSHOVER_USER_KEY,
+          title: `📧 SpaceX Stocks — New Email`,
+          message: `From: ${from}\nSubject: ${subject || '(no subject)'}${attachments.length > 0 ? `\n📎 ${attachments.length} attachment(s)` : ''}\n\n${bodyText?.slice(0, 300) || '(no preview)'}`,
+          priority: 1,
+          sound: 'magic'
+        })
+      })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
