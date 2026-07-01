@@ -18,7 +18,7 @@ export async function POST(request) {
     let bodyText = ''
     let bodyHtml = ''
     try {
-      const emailRes = await fetch(`https://api.resend.com/emails/${email_id}`, {
+      const emailRes = await fetch(`https://api.resend.com/inbound/emails/${email_id}`, {
   headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
 })
 const fullEmail = await emailRes.json()
