@@ -1,21 +1,74 @@
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const TRON_API_KEY = 'c6bfe543-8567-4cb4-8719-45779c1eb316'
-const MIN = 500
-const MAX = 5000
 
 function timeAgo(ts) {
   const secs = Math.floor((Date.now() - ts) / 1000)
   if (secs < 60) return `${secs}s ago`
   if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
-  return `${Math.floor(secs / 3600)}h ago`
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
+  return `${Math.floor(secs / 86400)}d ago`
 }
 
-async function fetchUSDT() {
+async function getSettings() {
+  try {
+    const { data } = await supabaseAdmin
+      .from('site_settings')
+      .select('key, value')
+      .in('key', ['feed_min_amount', 'feed_max_amount'])
+    const min = Number(data?.find(s => s.key === 'feed_min_amount')?.value || 500)
+    const max = Number(data?.find(s => s.key === 'feed_max_amount')?.value || 5000)
+    return { min, max }
+  } catch {
+    return { min: 500, max: 5000 }
+  }
+}
+
+async function getTodayCount() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const { count } = await supabaseAdmin
+    .from('blockchain_activity')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', today.toISOString())
+  return count || 0
+}
+
+function getDailyLimit() {
+  // Randomize daily limit between 10-30 but keep it consistent for the day
+  const seed = new Date().toDateString()
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+  return 10 + Math.abs(hash % 21) // 10-30
+}
+
+async function saveNew(entries) {
+  if (!entries.length) return
+  await supabaseAdmin
+    .from('blockchain_activity')
+    .upsert(
+      entries.map(e => ({
+        txid: e.txid,
+        currency: e.currency,
+        chain: e.chain,
+        amount: e.amount,
+        type: e.type,
+        explorer: e.explorer,
+        ts: e.ts,
+      })),
+      { onConflict: 'txid', ignoreDuplicates: true }
+    )
+}
+
+// DEPOSIT sources: USDT TRC20, TRX, BTC
+async function fetchUSDT(min, max) {
   try {
     const res = await fetch(
-      'https://apilist.tronscanapi.com/api/token_trc20/transfers?limit=20&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&start=0',
+      'https://apilist.tronscanapi.com/api/token_trc20/transfers?limit=50&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&start=0',
       { headers: { 'TRON-PRO-API-KEY': TRON_API_KEY } }
     )
     const data = await res.json()
@@ -25,19 +78,20 @@ async function fetchUSDT() {
         amount: (tx.quant / 1_000_000).toFixed(2),
         currency: 'USDT',
         chain: 'TRC-20',
+        type: 'deposit',
         explorer: `https://tronscan.org/#/transaction/${tx.transaction_id}`,
         time_ago: timeAgo(tx.block_ts),
         ts: tx.block_ts
       }))
-      .filter(e => Number(e.amount) >= MIN && Number(e.amount) <= MAX)
-      .slice(0, 5)
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
+      .slice(0, 4)
   } catch { return [] }
 }
 
-async function fetchTRX() {
+async function fetchTRX(min, max) {
   try {
     const res = await fetch(
-      'https://apilist.tronscanapi.com/api/transfer?limit=20&start=0',
+      'https://apilist.tronscanapi.com/api/transfer?limit=50&start=0',
       { headers: { 'TRON-PRO-API-KEY': TRON_API_KEY } }
     )
     const data = await res.json()
@@ -47,101 +101,22 @@ async function fetchTRX() {
         amount: (tx.amount / 1_000_000).toFixed(2),
         currency: 'TRX',
         chain: 'TRON',
+        type: 'deposit',
         explorer: `https://tronscan.org/#/transaction/${tx.transactionHash}`,
         time_ago: timeAgo(tx.timestamp),
         ts: tx.timestamp
       }))
-      .filter(e => Number(e.amount) >= MIN && Number(e.amount) <= MAX)
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
       .slice(0, 3)
   } catch { return [] }
 }
 
-async function fetchETH() {
+async function fetchBTC(min, max) {
   try {
-    const res = await fetch('https://eth.llamarpc.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', method: 'eth_getBlockByNumber',
-        params: ['latest', true], id: 1
-      })
-    })
+    const res = await fetch('https://api.blockchair.com/bitcoin/transactions?limit=20&s=id(desc)')
     const data = await res.json()
-    const txs = (data.result?.transactions || []).slice(0, 20)
-    const ts = parseInt(data.result?.timestamp, 16) * 1000
-
-    const priceRes = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-    )
-    const ethPrice = (await priceRes.json())?.ethereum?.usd || 3000
-
-    return txs
-      .map(tx => {
-        const usd = (parseInt(tx.value, 16) / 1e18) * ethPrice
-        return {
-          txid: tx.hash,
-          amount: usd.toFixed(2),
-          currency: 'ETH',
-          chain: 'Ethereum',
-          explorer: `https://etherscan.io/tx/${tx.hash}`,
-          time_ago: timeAgo(ts),
-          ts
-        }
-      })
-      .filter(e => Number(e.amount) >= MIN && Number(e.amount) <= MAX)
-      .slice(0, 3)
-  } catch { return [] }
-}
-
-async function fetchBNB() {
-  try {
-    const res = await fetch('https://bsc-dataseed.binance.org', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', method: 'eth_getBlockByNumber',
-        params: ['latest', true], id: 1
-      })
-    })
-    const data = await res.json()
-    const txs = (data.result?.transactions || []).slice(0, 20)
-    const ts = parseInt(data.result?.timestamp, 16) * 1000
-
-    const priceRes = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd'
-    )
-    const bnbPrice = (await priceRes.json())?.binancecoin?.usd || 400
-
-    return txs
-      .map(tx => {
-        const usd = (parseInt(tx.value, 16) / 1e18) * bnbPrice
-        return {
-          txid: tx.hash,
-          amount: usd.toFixed(2),
-          currency: 'BNB',
-          chain: 'BSC',
-          explorer: `https://bscscan.com/tx/${tx.hash}`,
-          time_ago: timeAgo(ts),
-          ts
-        }
-      })
-      .filter(e => Number(e.amount) >= MIN && Number(e.amount) <= MAX)
-      .slice(0, 3)
-  } catch { return [] }
-}
-
-async function fetchBTC() {
-  try {
-    const res = await fetch(
-      'https://api.blockchair.com/bitcoin/transactions?limit=10&s=id(desc)'
-    )
-    const data = await res.json()
-
-    const priceRes = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
-    )
+    const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
     const btcPrice = (await priceRes.json())?.bitcoin?.usd || 65000
-
     return (data.data || [])
       .map(tx => {
         const usd = (tx.output_total / 1e8) * btcPrice
@@ -150,31 +125,157 @@ async function fetchBTC() {
           amount: usd.toFixed(2),
           currency: 'BTC',
           chain: 'Bitcoin',
+          type: 'deposit',
           explorer: `https://blockchair.com/bitcoin/transaction/${tx.hash}`,
           time_ago: timeAgo(new Date(tx.time + 'Z').getTime()),
           ts: new Date(tx.time + 'Z').getTime()
         }
       })
-      .filter(e => Number(e.amount) >= MIN && Number(e.amount) <= MAX)
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
       .slice(0, 3)
+  } catch { return [] }
+}
+
+// WITHDRAWAL sources: ETH, BNB, SOL — completely different chains
+async function fetchETH(min, max) {
+  try {
+    const blockRes = await fetch('https://eth.llamarpc.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_getBlockByNumber', params: ['latest', true], id: 1 })
+    })
+    const blockData = await blockRes.json()
+    const txs = (blockData.result?.transactions || []).slice(0, 50)
+    const ts = parseInt(blockData.result?.timestamp, 16) * 1000
+    const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+    const ethPrice = (await priceRes.json())?.ethereum?.usd || 3000
+    return txs
+      .map(tx => {
+        const usd = (parseInt(tx.value, 16) / 1e18) * ethPrice
+        return {
+          txid: tx.hash,
+          amount: usd.toFixed(2),
+          currency: 'ETH',
+          chain: 'Ethereum',
+          type: 'withdrawal',
+          explorer: `https://etherscan.io/tx/${tx.hash}`,
+          time_ago: timeAgo(ts),
+          ts
+        }
+      })
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
+      .slice(0, 3)
+  } catch { return [] }
+}
+
+async function fetchBNB(min, max) {
+  try {
+    const blockRes = await fetch('https://bsc-dataseed.binance.org', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_getBlockByNumber', params: ['latest', true], id: 1 })
+    })
+    const blockData = await blockRes.json()
+    const txs = (blockData.result?.transactions || []).slice(0, 50)
+    const ts = parseInt(blockData.result?.timestamp, 16) * 1000
+    const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+    const bnbPrice = (await priceRes.json())?.binancecoin?.usd || 400
+    return txs
+      .map(tx => {
+        const usd = (parseInt(tx.value, 16) / 1e18) * bnbPrice
+        return {
+          txid: tx.hash,
+          amount: usd.toFixed(2),
+          currency: 'BNB',
+          chain: 'BSC',
+          type: 'withdrawal',
+          explorer: `https://bscscan.com/tx/${tx.hash}`,
+          time_ago: timeAgo(ts),
+          ts
+        }
+      })
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
+      .slice(0, 3)
+  } catch { return [] }
+}
+
+async function fetchSOL(min, max) {
+  try {
+    const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd')
+    const solPrice = (await priceRes.json())?.solana?.usd || 150
+    const sigRes = await fetch('https://api.mainnet-beta.solana.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress',
+        params: ['So11111111111111111111111111111111111111112', { limit: 20 }]
+      })
+    })
+    const sigData = await sigRes.json()
+    const sigs = (sigData.result || []).slice(0, 10)
+    return sigs
+      .map((s, i) => {
+        const seed = s.signature.slice(-8)
+        let hash = 0
+        for (let j = 0; j < seed.length; j++) hash = ((hash << 5) - hash) + seed.charCodeAt(j)
+        const usd = min + Math.abs(hash % (max - min))
+        return {
+          txid: s.signature,
+          amount: usd.toFixed(2),
+          currency: 'SOL',
+          chain: 'Solana',
+          type: 'withdrawal',
+          explorer: `https://solscan.io/tx/${s.signature}`,
+          time_ago: timeAgo(Date.now() - i * 180000),
+          ts: Date.now() - i * 180000
+        }
+      })
+      .filter(e => Number(e.amount) >= min && Number(e.amount) <= max)
+      .slice(0, 2)
   } catch { return [] }
 }
 
 export async function GET() {
   try {
-    const [usdt, trx, eth, bnb, btc] = await Promise.all([
-      fetchUSDT(),
-      fetchTRX(),
-      fetchETH(),
-      fetchBNB(),
-      fetchBTC(),
-    ])
+    const { min, max } = await getSettings()
+    const todayCount = await getTodayCount()
+    const dailyLimit = getDailyLimit()
 
-    const entries = [...usdt, ...trx, ...eth, ...bnb, ...btc]
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, 10)
+    // Only fetch and save new ones if under daily limit
+    if (todayCount < dailyLimit) {
+      const remaining = dailyLimit - todayCount
+      const batchSize = Math.min(remaining, Math.floor(Math.random() * 3) + 1)
 
-    return NextResponse.json({ entries })
+      const [usdt, trx, btc, eth, bnb, sol] = await Promise.all([
+        fetchUSDT(min, max),
+        fetchTRX(min, max),
+        fetchBTC(min, max),
+        fetchETH(min, max),
+        fetchBNB(min, max),
+        fetchSOL(min, max),
+      ])
+
+      const fresh = [...usdt, ...trx, ...btc, ...eth, ...bnb, ...sol]
+        .sort((a, b) => b.ts - a.ts)
+        .slice(0, batchSize)
+
+      if (fresh.length) await saveNew(fresh)
+    }
+
+    // Always return from database
+    const { data: entries } = await supabaseAdmin
+      .from('blockchain_activity')
+      .select('*')
+      .order('ts', { ascending: false })
+      .limit(50)
+
+    // Recompute time_ago from saved ts
+    const result = (entries || []).map(e => ({
+      ...e,
+      time_ago: timeAgo(e.ts)
+    }))
+
+    return NextResponse.json({ entries: result })
   } catch (err) {
     console.error('Activity feed error:', err.message)
     return NextResponse.json({ entries: [] })

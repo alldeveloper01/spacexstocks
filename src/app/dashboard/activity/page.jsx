@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react'
 const CURRENCY_COLORS = {
   USDT: '#26A17B',
   TRX: '#FF0013',
+  BTC: '#F7931A',
   ETH: '#627EEA',
   BNB: '#F3BA2F',
-  BTC: '#F7931A',
+  SOL: '#9945FF',
 }
 
 const CHAIN_LABELS = {
@@ -16,6 +17,12 @@ const CHAIN_LABELS = {
   'Ethereum': 'Ethereum',
   'BSC': 'BNB Chain',
   'Bitcoin': 'Bitcoin',
+  'Solana': 'Solana',
+}
+
+function randomInterval() {
+  // Random between 3-8 minutes in ms
+  return (3 + Math.random() * 5) * 60 * 1000
 }
 
 export default function ActivityFeedPage() {
@@ -39,12 +46,22 @@ export default function ActivityFeedPage() {
 
   useEffect(() => {
     fetchFeed()
-    const interval = setInterval(fetchFeed, 30000)
-    return () => clearInterval(interval)
+
+    // Randomized polling interval
+    let timeout
+    const schedule = () => {
+      timeout = setTimeout(() => {
+        fetchFeed()
+        schedule()
+      }, randomInterval())
+    }
+    schedule()
+
+    return () => clearTimeout(timeout)
   }, [])
 
-  const deposits = entries.filter(e => ['USDT', 'TRX'].includes(e.currency))
-  const withdrawals = entries.filter(e => ['ETH', 'BNB', 'BTC'].includes(e.currency))
+  const deposits = entries.filter(e => e.type === 'deposit')
+  const withdrawals = entries.filter(e => e.type === 'withdrawal')
   const displayed = filter === 'all' ? entries : filter === 'deposits' ? deposits : withdrawals
 
   const FILTERS = [
@@ -130,7 +147,7 @@ export default function ActivityFeedPage() {
       ) : displayed.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', border: '1px solid rgba(255,255,255,0.04)' }}>
           <div style={{ fontFamily: "'Courier New',monospace", fontSize: 9, letterSpacing: '0.35em', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase' }}>
-            No transactions found
+            No transactions yet
           </div>
         </div>
       ) : (
@@ -145,7 +162,7 @@ export default function ActivityFeedPage() {
           </div>
 
           {displayed.map((entry, i) => (
-            <div key={i} style={{
+            <div key={entry.id || i} style={{
               display: 'grid', gridTemplateColumns: '48px 1fr 1fr 120px',
               gap: 0, padding: '16px 20px',
               borderBottom: i < displayed.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
@@ -155,10 +172,10 @@ export default function ActivityFeedPage() {
               <div style={{
                 width: 32, height: 32,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `${CURRENCY_COLORS[entry.currency]}15`,
-                border: `1px solid ${CURRENCY_COLORS[entry.currency]}30`,
+                background: `${CURRENCY_COLORS[entry.currency] || '#C0C0C0'}15`,
+                border: `1px solid ${CURRENCY_COLORS[entry.currency] || '#C0C0C0'}30`,
                 fontFamily: "'Courier New',monospace", fontSize: 7,
-                letterSpacing: '0.1em', color: CURRENCY_COLORS[entry.currency],
+                letterSpacing: '0.1em', color: CURRENCY_COLORS[entry.currency] || '#C0C0C0',
                 flexShrink: 0,
               }}>
                 {entry.currency}
@@ -174,11 +191,11 @@ export default function ActivityFeedPage() {
                     fontFamily: "'Courier New',monospace",
                     fontSize: 7, letterSpacing: '0.2em', textTransform: 'uppercase',
                     padding: '2px 6px',
-                    background: ['USDT', 'TRX'].includes(entry.currency) ? 'rgba(192,192,192,0.08)' : 'rgba(255,80,80,0.08)',
-                    color: ['USDT', 'TRX'].includes(entry.currency) ? 'rgba(192,192,192,0.7)' : 'rgba(255,80,80,0.7)',
-                    border: `1px solid ${['USDT', 'TRX'].includes(entry.currency) ? 'rgba(192,192,192,0.15)' : 'rgba(255,80,80,0.15)'}`,
+                    background: entry.type === 'deposit' ? 'rgba(192,192,192,0.08)' : 'rgba(100,160,255,0.08)',
+                    color: entry.type === 'deposit' ? 'rgba(192,192,192,0.7)' : 'rgba(100,160,255,0.7)',
+                    border: `1px solid ${entry.type === 'deposit' ? 'rgba(192,192,192,0.15)' : 'rgba(100,160,255,0.15)'}`,
                   }}>
-                    {['USDT', 'TRX'].includes(entry.currency) ? 'Deposit' : 'Withdrawal'}
+                    {entry.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
                   </span>
                 </div>
                 <a href={entry.explorer} target="_blank" rel="noopener noreferrer" style={{
