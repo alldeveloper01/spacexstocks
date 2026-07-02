@@ -82,7 +82,7 @@ export default function AMLPage() {
         <div className="section">
           <h2>3. Know Your Customer (KYC) Program</h2>
           <h3>3.1 Customer Identification</h3>
-          <p>All users of the SpaceX Stocks platform who reach the withdrawal threshold of $5,000 in their withdrawal balance are required to complete our identity verification process. Our KYC program includes:</p>
+          <p>Users of the SpaceX Stocks platform may be required to complete our identity verification process at the discretion of our compliance team. KYC verification may be triggered based on account activity, transaction patterns, withdrawal requests, or other compliance criteria determined internally. Our KYC program includes:</p>
           <ul>
             <li>Verification of government-issued photo identification documents</li>
             <li>Biometric verification through selfie with identification document</li>
