@@ -235,14 +235,41 @@ async function fetchSOL(min, max) {
   } catch { return [] }
 }
 
+async function shouldFetchNew() {
+  const todayCount = await getTodayCount()
+  const dailyLimit = getDailyLimit()
+  if (todayCount >= dailyLimit) return false
+
+  try {
+    const { data } = await supabaseAdmin
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'activity_last_fetched')
+      .maybeSingle()
+
+    if (data?.value) {
+      const lastFetch = new Date(data.value).getTime()
+      const minGap = (30 + Math.random() * 60) * 60 * 1000
+      if (Date.now() - lastFetch < minGap) return false
+    }
+  } catch {}
+
+  return true
+}
+
+async function updateLastFetched() {
+  await supabaseAdmin
+    .from('site_settings')
+    .upsert({ key: 'activity_last_fetched', value: new Date().toISOString() }, { onConflict: 'key' })
+}
+
 export async function GET() {
   try {
     const { min, max } = await getSettings()
-    const todayCount = await getTodayCount()
-    const dailyLimit = getDailyLimit()
 
-    // Only fetch and save new ones if under daily limit
-    if (todayCount < dailyLimit) {
+    if (await shouldFetchNew()) {
+      const dailyLimit = getDailyLimit()
+      const todayCount = await getTodayCount()
       const remaining = dailyLimit - todayCount
       const batchSize = Math.min(remaining, Math.floor(Math.random() * 3) + 1)
 
@@ -259,17 +286,18 @@ export async function GET() {
         .sort((a, b) => b.ts - a.ts)
         .slice(0, batchSize)
 
-      if (fresh.length) await saveNew(fresh)
+      if (fresh.length) {
+        await saveNew(fresh)
+        await updateLastFetched()
+      }
     }
 
-    // Always return from database
     const { data: entries } = await supabaseAdmin
       .from('blockchain_activity')
       .select('*')
       .order('ts', { ascending: false })
       .limit(50)
 
-    // Recompute time_ago from saved ts
     const result = (entries || []).map(e => ({
       ...e,
       time_ago: timeAgo(e.ts)
