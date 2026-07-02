@@ -132,7 +132,7 @@ export default function MemberIDPage() {
   const joinDate = user?.member_since
     ? new Date(user.member_since).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
     : 'N/A'
-  const qrValue = `https://spacestocks.finance/member/${memberNumber}`
+  const qrValue = `https://www.spacestocks.finance/member/${user.member_number}`
 
   const TIER_COLORS = {
     Bronze: '#CD7F32',
