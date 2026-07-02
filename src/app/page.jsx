@@ -3,21 +3,19 @@ import { join } from 'path'
 
 export const metadata = {
   title: 'SpaceX Stocks — Private Investment Access',
-  description: 'A private managed fund trading SpaceX, Tesla and the world\'s most transformative companies. Weekly returns. Exclusive member perks. Invitation only.',
-  metadataBase: new URL('https://spacestocks.finance'),
+  description: 'A private managed investment platform trading SpaceX, Tesla, Starlink and X Corp. Weekly returns paid out. Exclusive member perks. Invitation only.',
+  metadataBase: new URL('https://www.spacestocks.finance'),
   openGraph: {
     title: 'SpaceX Stocks — Private Investment Access',
     description: 'Weekly returns. Exclusive perks. Invitation only.',
-    url: 'https://spacestocks.finance',
+    url: 'https://www.spacestocks.finance',
     siteName: 'SpaceX Stocks',
     type: 'website',
-    images: [{ url: 'https://www.spacestocks.finance/spacex_stocks_og_image.jpg', width: 1200, height: 630, alt: 'SpaceX Stocks — Private Investment Access' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SpaceX Stocks',
-    description: 'Private SpaceX investment access. Weekly returns.',
-    images: ['https://www.spacestocks.finance/spacex_stocks_og_image.jpg'],
+    title: 'SpaceX Stocks — Private Investment Access',
+    description: 'Private SpaceX investment access. Weekly returns. Invitation only.',
     creator: '@spacexstocks',
   },
   alternates: {
@@ -26,15 +24,15 @@ export const metadata = {
   other: {
     'og:image:width': '1200',
     'og:image:height': '630',
-    'og:image:type': 'image/jpeg',
+    'og:image:type': 'image/png',
     'og:locale': 'en_US',
     'og:site_name': 'SpaceX Stocks',
     'linkedin:owner': 'spacexstocks',
     'pinterest:description': 'Private SpaceX investment platform. Weekly returns. Exclusive member perks. Invitation only.',
-    'pinterest:image': 'https://www.spacestocks.finance/spacex_stocks_og_image.jpg',
+    'pinterest:image': 'https://www.spacestocks.finance/opengraph-image.png',
     'whatsapp:title': 'SpaceX Stocks — Private Investment Access',
     'whatsapp:description': 'Weekly returns. Exclusive perks. Invitation only.',
-    'whatsapp:image': 'https://www.spacestocks.finance/spacex_stocks_og_image.jpg',
+    'whatsapp:image': 'https://www.spacestocks.finance/opengraph-image.png',
   },
   robots: {
     index: true,
