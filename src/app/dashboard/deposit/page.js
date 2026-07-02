@@ -271,17 +271,17 @@ export default function DepositPage() {
           )}
 
           <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-            {[50, 100, 500, 1000, 5000].map(a => (
-              <button key={a} onClick={() => setAmount(String(a))} style={{
-                background: amount == a ? 'rgba(192,192,192,0.1)' : 'transparent',
-                border: `1px solid ${amount == a ? 'rgba(192,192,192,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                color: amount == a ? '#C0C0C0' : 'rgba(255,255,255,0.3)',
-                fontFamily: "'Courier New',monospace", fontSize: 8, letterSpacing: '0.2em',
-                padding: '6px 12px', cursor: 'pointer', textTransform: 'uppercase',
-              }}>
-                ${a.toLocaleString()}
-              </button>
-            ))}
+            {[MIN, Math.round(MIN*1.5), MIN*2, MIN*3, MIN*5].map((a,idx) => (
+  <button key={idx} onClick={() => setAmount(String(a))} style={{
+    background: amount == a ? 'rgba(192,192,192,0.1)' : 'transparent',
+    border: `1px solid ${amount == a ? 'rgba(192,192,192,0.3)' : 'rgba(255,255,255,0.08)'}`,
+    color: amount == a ? '#C0C0C0' : 'rgba(255,255,255,0.3)',
+    fontFamily: "'Courier New',monospace", fontSize: 8, letterSpacing: '0.2em',
+    padding: '6px 12px', cursor: 'pointer', textTransform: 'uppercase',
+  }}>
+    ${a.toLocaleString()}
+  </button>
+))}
           </div>
         </div>
 

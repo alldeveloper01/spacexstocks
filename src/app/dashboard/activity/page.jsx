@@ -232,7 +232,7 @@ export default function ActivityFeedPage() {
       )}
 
       <div style={{ marginTop: 16, fontFamily: "'Courier New',monospace", fontSize: 8, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.1)', textTransform: 'uppercase', textAlign: 'center' }}>
-        All transactions pulled directly from blockchain networks · Anonymous display only
+        Live transactions pulled directly from users portfolio in the platform · Anonymous display only
       </div>
     </div>
   )
