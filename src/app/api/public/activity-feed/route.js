@@ -292,6 +292,46 @@ export async function GET() {
       }
     }
 
+    // Pull platform deposits and save as activity
+    try {
+      const CHAIN_MAP = {
+        usdttrc20: { currency: 'USDT', chain: 'TRC-20' },
+        usdterc20: { currency: 'USDT', chain: 'Ethereum' },
+        trx: { currency: 'TRX', chain: 'TRON' },
+        btc: { currency: 'BTC', chain: 'Bitcoin' },
+        eth: { currency: 'ETH', chain: 'Ethereum' },
+        bnbbsc: { currency: 'BNB', chain: 'BSC' },
+        sol: { currency: 'SOL', chain: 'Solana' },
+        xrp: { currency: 'XRP', chain: 'Ripple' },
+        ltc: { currency: 'LTC', chain: 'Litecoin' },
+        usdcbsc: { currency: 'USDC', chain: 'BSC' },
+        doge: { currency: 'DOGE', chain: 'Dogecoin' },
+        maticpolygon: { currency: 'MATIC', chain: 'Polygon' },
+      }
+      const { data: recentDeposits } = await supabaseAdmin
+        .from('deposits')
+        .select('id, amount, currency, created_at, oxapay_track_id')
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (recentDeposits?.length) {
+        const depositEntries = recentDeposits.map(d => {
+          const mapped = CHAIN_MAP[d.currency] || { currency: d.currency?.toUpperCase() || 'USDT', chain: 'TRC-20' }
+          return {
+            txid: d.oxapay_track_id || `dep_${d.id}`,
+            currency: mapped.currency,
+            chain: mapped.chain,
+            amount: d.amount,
+            type: 'deposit',
+            explorer: d.oxapay_track_id ? `https://oxapay.com/transaction/${d.oxapay_track_id}` : null,
+            ts: new Date(d.created_at).getTime(),
+          }
+        })
+        await saveNew(depositEntries)
+      }
+    } catch {}
+
+    // Always return from database
     const { data: entries } = await supabaseAdmin
       .from('blockchain_activity')
       .select('*')
