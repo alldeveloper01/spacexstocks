@@ -1,28 +1,44 @@
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /terms
+Allow: /privacy
+Allow: /aml
+Allow: /risk
+Allow: /faq
 Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /auth/
+Disallow: /member/
 
 User-agent: Googlebot
 Allow: /
+Allow: /about
+Allow: /terms
+Allow: /privacy
+Allow: /aml
+Allow: /risk
+Allow: /faq
 Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /auth/
+Disallow: /member/
 
 User-agent: GPTBot
 Allow: /
+Allow: /about
 Disallow: /dashboard/
 Disallow: /admin/
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /about
 Disallow: /dashboard/
 Disallow: /admin/
 
 User-agent: PerplexityBot
 Allow: /
 
-Sitemap: https://spacestocks.finance/sitemap.xml
+Sitemap: https://www.spacestocks.finance/sitemap.xml
