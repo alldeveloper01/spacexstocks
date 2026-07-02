@@ -241,6 +241,7 @@ export default function Dashboard() {
   const [scanLine, setScanLine] = useState(0)
   const [greeting, setGreeting] = useState('Hello')
   const [topupInv, setTopupInv] = useState(null)
+  const [newsItems, setNewsItems] = useState([])
   const [topupSuccess, setTopupSuccess] = useState(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('sx_token') : null
 
@@ -279,6 +280,7 @@ export default function Dashboard() {
       } catch {}
     }
     fetchPrice()
+    fetch('/api/public/news').then(r => r.json()).then(d => setNewsItems(d.items || [])).catch(() => {})
     const iv = setInterval(fetchPrice, 60000)
     const sl = setInterval(() => setScanLine(l => (l + 1) % 100), 30)
     return () => { clearInterval(iv); clearInterval(sl) }
@@ -534,11 +536,9 @@ export default function Dashboard() {
         </div>
         <div style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
           {[
-            { icon: '🚀', text: 'Falcon 9 · Starlink Group 15-4 · Launch Successful', time: '2h ago', color: 'rgba(192,192,192,0.6)' },
-            { icon: '📡', text: `SPCX live at $${spce.toFixed(2)} — ${ipoUp ? '+' : ''}${ipoChangePct}% since IPO`, time: 'Now', color: 'rgba(255,255,255,0.45)' },
-            { icon: '🛸', text: 'Starship Flight 9 · Orbital Test · Scheduled', time: '2d away', color: 'rgba(255,200,0,0.5)' },
-            { icon: '💰', text: 'Weekly returns processed for all active plans', time: '3d ago', color: 'rgba(192,192,192,0.4)' },
-          ].map((f, i, arr) => (
+  { icon: '📡', text: `SPCX live at $${spce.toFixed(2)} — ${ipoUp ? '+' : ''}${ipoChangePct}% since IPO`, time: 'Now', color: 'rgba(255,255,255,0.45)', link: null },
+  ...newsItems.map(n => ({ icon: n.icon, text: n.title, time: n.time_ago, color: 'rgba(192,192,192,0.5)', link: n.link }))
+].map((f, i, arr) => (
             <div key={i} style={{
               display: 'flex', alignItems: 'flex-start', gap: 14,
               padding: '14px 20px',
@@ -547,8 +547,10 @@ export default function Dashboard() {
             }}>
               <span style={{ fontSize: 14, flexShrink: 0, opacity: 0.7 }}>{f.icon}</span>
               <div style={{ flex: 1, fontFamily: "'Courier New',monospace", fontSize: 10, color: f.color, letterSpacing: '0.04em', lineHeight: 1.8 }}>
-                {f.text}
-              </div>
+  {f.link && f.link !== '#' ? (
+    <a href={f.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>{f.text} ↗</a>
+  ) : f.text}
+</div>
               <div style={{ fontFamily: "'Courier New',monospace", fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
                 {f.time}
               </div>
